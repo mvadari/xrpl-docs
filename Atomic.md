@@ -39,6 +39,29 @@ This spec proposes one new transaction: `Atomic`. It will not require any new le
 |`Transactions`|✔️|`array`|`Vector256`|
 |`BatchSigners`| |`array`|`STArray`|
 
+```
+{
+    TransactionType: "Atomic",
+    Account: "r.....",
+    AtomicityType: n,
+    Transactions: [transaction hashes...]
+    RawTransactions: [transaction blobs...], // not included in the signature or stored on ledger
+    BatchSigners: [ // only sign the list of transaction hashes and probably the atomicity type
+      BatchSigner: {
+        Account: "r.....",
+        Signature: "...."
+      },
+      BatchSigner: {
+        Account: "r.....",
+        Signers: [...] // multisign
+      },
+      ...
+    ],
+    SigningPubKey: "....",
+    TxnSignature: "...."
+}
+```
+
 ### 2.1. `Fee`
 
 $$(n+2)*base\_fee$$
@@ -75,7 +98,7 @@ A transaction will be considered a failure if it receives any result that is not
 
 ### 2.5. `BatchSigners`
 
-This field operates similarly to [multisign](https://xrpl.org/docs/concepts/accounts/multi-signing/) on the XRPL. It is only needed if multiple accounts' transactions are included in the `Atomic` transaction.
+This field operates similarly to [multisign](https://xrpl.org/docs/concepts/accounts/multi-signing/) on the XRPL. It is only needed if multiple accounts' transactions are included in the `Atomic` transaction; otherwise, the transaction signature provides the same security guarantees.
 
 |FieldName | Required? | JSON Type | Internal Type |
 |:---------|:-----------|:---------------|:------------|
@@ -95,31 +118,6 @@ These fields are included if the account is signing with a single signature (as 
 #### 2.5.3. `Signers`
 
 This field is included if the account is signing with multi-sign (as opposed to a single signature). It operates equivalently to the [`Signers` field](https://xrpl.org/docs/references/protocol/transactions/common-fields/#signers-field) used in standard transaction multi-sign. This field holds the signatures for the `AtomicityType` and `Transactions` fields.
-
-### 2.6. Example Transaction Breakdown
-
-```
-{
-    TransactionType: "Atomic",
-    Account: "r.....",
-    AtomicityType: n,
-    Transactions: [transaction hashes...]
-    RawTransactions: [transaction blobs...], // not included in the signature or stored on ledger
-    BatchSigners: [ // only sign the list of transaction hashes and probably the atomicity type
-      BatchSigner: {
-        Account: "r.....",
-        Signature: "...."
-      },
-      BatchSigner: {
-        Account: "r.....",
-        Signers: [...] // multisign
-      },
-      ...
-    ],
-    SigningPubKey: "....",
-    TxnSignature: "...."
-}}
-```
 
 ## 3. Security
 
@@ -167,20 +165,24 @@ The answer to this question is still being investigated. Some potential answers:
 * Return a general error, `temBATCH_FAILED`/`tecBATCH_FAILED` 
 * Return a list of all the errors encountered in the metadata, for easier debugging
 
-### A.6: How does this work in conjunction with [XLS-49d](https://github.com/XRPLF/XRPL-Standards/discussions/144)? If I give a signer list powers over the `Atomic` transaction, can it effectively run all transaction types?
+### A.6: Can another account sign/pay for the outer transaction if they don't have any of the inner transactions?
+
+If there are multiple parties in the inner transactions, yes. Otherwise, no. This is because in a single party `Atomic` transaction, the inner transaction's signoff is provided by `BatchSigners`.
+
+### A.7: How does this work in conjunction with [XLS-49d](https://github.com/XRPLF/XRPL-Standards/discussions/144)? If I give a signer list powers over the `Atomic` transaction, can it effectively run all transaction types?
 
 The answer to this question is still being investigated. Some potential answers:
 * All signer lists should have access to this transaction but only for the transaction types they have powers over
 * Only the global signer list can have access to this transaction
 
-### A.7: Why not call this transaction `Batch`?
+### A.8: Why not call this transaction `Batch`?
 
 It has greater capabilities than just batching transactions. 
 
-### A.8: What if I want some error code types to be allowed to proceed, just as `tesSUCCESS` would, in e.g. an `ALL` case?
+### A.9: What if I want some error code types to be allowed to proceed, just as `tesSUCCESS` would, in e.g. an `ALL` case?
 
 This was deemed unnecessary. If you have a need for this, please provide example use-cases.
 
-### A.9: What if I want the `Batch` transaction signer to handle the fees for the inner transactions?
+### A.10: What if I want the `Batch` transaction signer to handle the fees for the inner transactions?
 
 That is not supported in this version of the spec. This is due to the added complexity of passing info about who is paying the fee down the stack.
