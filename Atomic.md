@@ -94,9 +94,9 @@ A transaction will be considered a failure if it receives any result that is not
 
 ### 2.4. `Transactions`
 
-`Transactions` contains a list of the transaction hashes for all the transactions contained in `RawTransactions`. This is the only part of the inner transactions that is saved as a part of the ledger within the `Atomic` transaction, since the inner transactions themselves will be their own transactions on-ledger.
+`Transactions` contains a list of the transaction hashes for all the transactions contained in `RawTransactions`. This is the only part of the inner transactions that is saved as a part of the ledger within the `Atomic` transaction, since the inner transactions themselves will be their own transactions on-ledger. The hashes in `Transactions` **must** be in the same order as the raw transactions in `RawTransactions`.
 
-While this field seems complicated to work with, it can easily be abstracted away (e.g. as a part of autofilling) in tooling.
+While this field seems complicated/confusing to work with, it can easily be abstracted away (e.g. as a part of autofilling) in tooling, and it's easy for `rippled` to check a hash doesn't match its corresponding transaction in `RawTransaction`.
 
 ### 2.5. `BatchSigners`
 
