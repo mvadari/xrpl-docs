@@ -96,6 +96,8 @@ A transaction will be considered a failure if it receives any result that is not
 
 `Transactions` contains a list of the transaction hashes for all the transactions contained in `RawTransactions`. This is the only part of the inner transactions that is saved as a part of the ledger within the `Atomic` transaction, since the inner transactions themselves will be their own transactions on-ledger.
 
+While this field seems complicated to work with, it can easily be abstracted away (e.g. as a part of autofilling) in tooling.
+
 ### 2.5. `BatchSigners`
 
 This field operates similarly to [multisign](https://xrpl.org/docs/concepts/accounts/multi-signing/) on the XRPL. It is only needed if multiple accounts' transactions are included in the `Atomic` transaction; otherwise, the transaction signature provides the same security guarantees.
