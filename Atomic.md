@@ -64,7 +64,7 @@ This spec proposes one new transaction: `Atomic`. It will not require any new le
 
 ### 2.1. `Fee`
 
-$$(n+2)*base\_fee$$
+$$(n+2)*base\textunderscore fee$$
 (where `n` is the number of signatures included in the outer transaction)
 
 In other words, the fee is twice the base fee (a total of 20 drops when there is no fee escalation). This is just the fee for processing the atomicity overhead; each inner transaction handles its own fees.
@@ -86,7 +86,7 @@ If the `BATCH` atomicity type is used, then all transactions will be applied unt
 Each inner transaction:
 * **Must** include a sequence number
 * **Must** include a fee
-* **Must not** be signed (the global transaction is already signed by all relevant parties)
+* **Must not** be signed (the global transaction is already signed by all relevant parties). They must instead have an empty string (`""`) in the `SigningPubKey` and `TxnSignature` fields.
 
 A transaction will be considered a failure if it receives any result that is not `tesSUCCESS`.
 
