@@ -36,7 +36,7 @@ This spec proposes one new transaction: `Atomic`. It will not require any new le
 |`Fee`|✔️|`string`|`STAmount`|
 |`AtomicityType`|✔️|`number`|`UInt8`|
 |`RawTransactions`|!|`array`|`STArray`|
-|`Transactions`|✔️|`array`|`Vector256`|
+|`TxnIDs`|✔️|`array`|`Vector256`|
 |`BatchSigners`| |`array`|`STArray`|
 
 ```
@@ -44,7 +44,7 @@ This spec proposes one new transaction: `Atomic`. It will not require any new le
     TransactionType: "Atomic",
     Account: "r.....",
     AtomicityType: n,
-    Transactions: [transaction hashes...]
+    TxnIDs: [transaction hashes...]
     RawTransactions: [transaction blobs...], // not included in the signature or stored on ledger
     BatchSigners: [ // only sign the list of transaction hashes and probably the atomicity type
       BatchSigner: {
@@ -92,9 +92,9 @@ A transaction will be considered a failure if it receives any result that is not
 
 **This field is not included in the validated transaction**, since all transactions are included separately as a part of the ledger.
 
-### 2.4. `Transactions`
+### 2.4. `TxnIDs`
 
-`Transactions` contains a list of the transaction hashes for all the transactions contained in `RawTransactions`. This is the only part of the inner transactions that is saved as a part of the ledger within the `Atomic` transaction, since the inner transactions themselves will be their own transactions on-ledger. The hashes in `Transactions` **must** be in the same order as the raw transactions in `RawTransactions`.
+`TxnIDs` contains a list of the transaction hashes/IDs for all the transactions contained in `RawTransactions`. This is the only part of the inner transactions that is saved as a part of the ledger within the `Atomic` transaction, since the inner transactions themselves will be their own transactions on-ledger. The hashes in `TxnIDs` **must** be in the same order as the raw transactions in `RawTransactions`.
 
 While this field seems complicated/confusing to work with, it can easily be abstracted away (e.g. as a part of autofilling) in tooling, and it's easy for `rippled` to check a hash doesn't match its corresponding transaction in `RawTransaction`.
 
@@ -115,11 +115,11 @@ This is an account that has at least one inner transaction.
 
 #### 2.5.2. `SigningPubKey` and `Signature`
 
-These fields are included if the account is signing with a single signature (as opposed to multi-sign). They sign the `AtomicityType` and `Transactions` fields.
+These fields are included if the account is signing with a single signature (as opposed to multi-sign). They sign the `AtomicityType` and `TxnIDs` fields.
 
 #### 2.5.3. `Signers`
 
-This field is included if the account is signing with multi-sign (as opposed to a single signature). It operates equivalently to the [`Signers` field](https://xrpl.org/docs/references/protocol/transactions/common-fields/#signers-field) used in standard transaction multi-sign. This field holds the signatures for the `AtomicityType` and `Transactions` fields.
+This field is included if the account is signing with multi-sign (as opposed to a single signature). It operates equivalently to the [`Signers` field](https://xrpl.org/docs/references/protocol/transactions/common-fields/#signers-field) used in standard transaction multi-sign. This field holds the signatures for the `AtomicityType` and `TxnIDs` fields.
 
 ## 3. Security
 
