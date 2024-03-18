@@ -146,20 +146,24 @@ Yes, just as they would if they were individually submitted.
 
 TODO: maybe only the batch fee would be claimed? Maybe that fee should be higher?
 
-### A.3: Why do I need to include sequence numbers in the transactions? How do I handle situations where one transaction might fail but the next might succeed?
+### A.3: Could there be an additional atomicity type for allowing all transactions to be processed regardless of whether they succeeded?
+
+This is unnecessary, since that is equivalent to submitting the transactions normally.
+
+### A.4: Why do I need to include sequence numbers in the transactions? How do I handle situations where one transaction might fail but the next might succeed?
 
 Sequence numbers need to be included to avoid hash collisions with multiple identical transactions. Otherwise, e.g. two payment transactions for 1 XRP to the same account (for, say, a platform fee) would have the same contents and therefore the same hash.
 
 To handle cases where sequence numbers may need to be "skipped", [tickets](https://xrpl.org/docs/concepts/accounts/tickets/) can be used.
 
-### A.4: Would this feature enable greater frontrunning abilities?
+### A.5: Would this feature enable greater frontrunning abilities?
 
 That is definitely a concern. Ways to mitigate this are still being investigated. Some potential answers:
 * Charge for more extensive path usage
 * Have higher fees for batch transactions
 * Submit the batch transactions at the end of the ledger
 
-### A.5: What error is returned if all the transactions fail in an `OR`/batch transaction?
+### A.6: What error is returned if all the transactions fail in an `OR`/batch transaction?
 
 The answer to this question is still being investigated. Some potential answers:
 * Return the first error encountered
@@ -167,24 +171,24 @@ The answer to this question is still being investigated. Some potential answers:
 * Return a general error, `temBATCH_FAILED`/`tecBATCH_FAILED` 
 * Return a list of all the errors encountered in the metadata, for easier debugging
 
-### A.6: Can another account sign/pay for the outer transaction if they don't have any of the inner transactions?
+### A.7: Can another account sign/pay for the outer transaction if they don't have any of the inner transactions?
 
 If there are multiple parties in the inner transactions, yes. Otherwise, no. This is because in a single party `Atomic` transaction, the inner transaction's signoff is provided by `BatchSigners`.
 
-### A.7: How does this work in conjunction with [XLS-49d](https://github.com/XRPLF/XRPL-Standards/discussions/144)? If I give a signer list powers over the `Atomic` transaction, can it effectively run all transaction types?
+### A.8: How does this work in conjunction with [XLS-49d](https://github.com/XRPLF/XRPL-Standards/discussions/144)? If I give a signer list powers over the `Atomic` transaction, can it effectively run all transaction types?
 
 The answer to this question is still being investigated. Some potential answers:
 * All signer lists should have access to this transaction but only for the transaction types they have powers over
 * Only the global signer list can have access to this transaction
 
-### A.8: Why not call this transaction `Batch`?
+### A.9: Why not call this transaction `Batch`?
 
 It has greater capabilities than just batching transactions. 
 
-### A.9: What if I want some error code types to be allowed to proceed, just as `tesSUCCESS` would, in e.g. an `ALL` case?
+### A.10: What if I want some error code types to be allowed to proceed, just as `tesSUCCESS` would, in e.g. an `ALL` case?
 
 This was deemed unnecessary. If you have a need for this, please provide example use-cases.
 
-### A.10: What if I want the `Batch` transaction signer to handle the fees for the inner transactions?
+### A.11: What if I want the `Batch` transaction signer to handle the fees for the inner transactions?
 
 That is not supported in this version of the spec. This is due to the added complexity of passing info about who is paying the fee down the stack.
