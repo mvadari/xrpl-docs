@@ -133,7 +133,7 @@ This field is included if the account is signing with multi-sign (as opposed to 
 <summary>
 In this example, the user is creating an offer while trading on a DEX UI, and the second transaction is a platform fee.
 
-The inner transactions are not signed, and the `BatchSigners` field is not needed on the outer transaction, since there is only one signer.
+The inner transactions are not signed, and the `BatchSigners` field is not needed on the outer transaction, since there is only one account involved.
 </summary>
 
 ```
@@ -240,7 +240,10 @@ Note that the inner transactions are committed as normal transactions, and the `
 #### 3.2.1. Sample Transaction
 
 <details open>
-<summary>In this example, two users are atomically swapping their tokens, XRP for GKO.</summary>
+<summary>
+In this example, two users are atomically swapping their tokens, XRP for GKO.
+The inner transactions are still not signed, but the `BatchSigners` field is needed on the outer transaction, since there are two accounts' inner transactions in this `Batch` transaction.
+</summary>
 
 ```
 {
@@ -308,7 +311,11 @@ Note that the inner transactions are committed as normal transactions, and the `
 #### 3.2.2. Sample Ledger
 
 <details open>
-<summary>Note that the inner transactions are committed as normal transactions, and the `RawTransactions` field is not included in the validated version of the outer transaction.</summary>
+<summary>
+This example shows what the ledger will look like after the transaction is confirmed.
+
+Note that the inner transactions are committed as normal transactions, and the `RawTransactions` field is not included in the validated version of the outer transaction.
+</summary>
 
 ```
 [
