@@ -157,7 +157,7 @@ The inner transactions are not signed, and the `BatchSigners` field is not neede
           value: "2"
         },
         Sequence: 4,
-        Fee: "12",
+        Fee: "10",
         SigningPubKey: "",
         TxnSignature: ""
       }
@@ -169,14 +169,14 @@ The inner transactions are not signed, and the `BatchSigners` field is not neede
         Destination: "rDEXfrontEnd23E44wKL3S6dj9FaXv",
         Amount: "1000",
         Sequence: 5,
-        Fee: "12",
+        Fee: "10",
         SigningPubKey: "",
         TxnSignature: ""
       }
     }
   ],
   Sequence: 6,
-  Fee: "12",
+  Fee: "20",
   SigningPubKey: "022D40673B44C82DEE1DDB8B9BB53DCCE4F97B27404DB850F068DD91D685E337EA",
   TxnSignature: "3045022100EC5D367FAE2B461679AD446FBBE7BA260506579AF4ED5EFC3EC25F4DD1885B38022018C2327DB281743B12553C7A6DC0E45B07D3FC6983F261D7BCB474D89A0EC5B8"
 }
@@ -204,7 +204,7 @@ Note that the inner transactions are committed as normal transactions, and the `
       value: "2"
     },
     Sequence: 4,
-    Fee: "12",
+    Fee: "10",
     SigningPubKey: "",
     TxnSignature: ""
   },
@@ -214,7 +214,7 @@ Note that the inner transactions are committed as normal transactions, and the `
     Destination: "rDEXfrontEnd23E44wKL3S6dj9FaXv",
     Amount: "1000",
     Sequence: 5,
-    Fee: "12",
+    Fee: "10",
     SigningPubKey: "",
     TxnSignature: ""
   },
@@ -227,7 +227,7 @@ Note that the inner transactions are committed as normal transactions, and the `
       "EAE6B33078075A7BA958434691B896CCA4F532D618438DE6DDC7E3FB7A4A0AAB"
     ],
     Sequence: 6,
-    Fee: "12",
+    Fee: "20",
     SigningPubKey: "022D40673B44C82DEE1DDB8B9BB53DCCE4F97B27404DB850F068DD91D685E337EA",
     TxnSignature: "3045022100EC5D367FAE2B461679AD446FBBE7BA260506579AF4ED5EFC3EC25F4DD1885B38022018C2327DB281743B12553C7A6DC0E45B07D3FC6983F261D7BCB474D89A0EC5B8"
   }
@@ -263,7 +263,7 @@ The inner transactions are still not signed, but the `BatchSigners` field is nee
         Destination: "rUser2fDds782Bd6eK15RDnGMtxf7m",
         Amount: "6000000",
         Sequence: 5,
-        Fee: "12",
+        Fee: "10",
         SigningPubKey: "",
         TxnSignature: ""
       }
@@ -279,7 +279,7 @@ The inner transactions are still not signed, but the `BatchSigners` field is nee
           value: "2"
         },
         Sequence: 5,
-        Fee: "12",
+        Fee: "10",
         SigningPubKey: "",
         TxnSignature: ""
       }
@@ -302,7 +302,7 @@ The inner transactions are still not signed, but the `BatchSigners` field is nee
     },
   ],
   Sequence: 6,
-  Fee: "12",
+  Fee: "40",
   SigningPubKey: "03072BBE5F93D4906FC31A690A2C269F2B9A56D60DA9C2C6C0D88FB51B644C6F94",
   TxnSignature: "30440220702ABC11419AD4940969CC32EB4D1BFDBFCA651F064F30D6E1646D74FBFC493902204E5B451B447B0F69904127F04FE71634BD825A8970B9467871DA89EEC4B021F8"
 }
@@ -326,7 +326,7 @@ Note that the inner transactions are committed as normal transactions, and the `
     Destination: "rUser2fDds782Bd6eK15RDnGMtxf7m",
     Amount: "6000000",
     Sequence: 5,
-    Fee: "12",
+    Fee: "10",
     SigningPubKey: "",
     TxnSignature: ""
   },
@@ -340,7 +340,7 @@ Note that the inner transactions are committed as normal transactions, and the `
       value: "2"
     },
     Sequence: 5,
-    Fee: "12",
+    Fee: "10",
     SigningPubKey: "",
     TxnSignature: ""
   },
@@ -369,7 +369,7 @@ Note that the inner transactions are committed as normal transactions, and the `
       },
     ],
     Sequence: 6,
-    Fee: "12",
+    Fee: "40",
     SigningPubKey: "03072BBE5F93D4906FC31A690A2C269F2B9A56D60DA9C2C6C0D88FB51B644C6F94",
     TxnSignature: "30440220702ABC11419AD4940969CC32EB4D1BFDBFCA651F064F30D6E1646D74FBFC493902204E5B451B447B0F69904127F04FE71634BD825A8970B9467871DA89EEC4B021F8"
   }
