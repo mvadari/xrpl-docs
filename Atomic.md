@@ -131,7 +131,7 @@ This field is included if the account is signing with multi-sign (as opposed to 
 
 <details open>
 <summary>
-In this example, the user is generating an `OfferCreate` transaction while trading on a DEX UI, and the second transaction is a platform fee.
+In this example, the user is creating an offer while trading on a DEX UI, and the second transaction is a platform fee.
 
 The inner transactions are not signed, and the `BatchSigners` field is not needed on the outer transaction, since there is only one signer.
 </summary>
