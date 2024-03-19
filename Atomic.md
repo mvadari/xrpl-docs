@@ -39,21 +39,21 @@ The rough idea of this design is that users can include "sub-transactions" insid
 |`AtomicityType`|✔️|`number`|`UInt8`|
 |`RawTransactions`|!|`array`|`STArray`|
 |`TxnIDs`|✔️|`array`|`Vector256`|
-|`BatchSigners`| |`array`|`STArray`|
+|`AtomicSigners`| |`array`|`STArray`|
 
-```
+```json
 {
     TransactionType: "Atomic",
     Account: "r.....",
     AtomicityType: n,
     TxnIDs: [transaction hashes...]
     RawTransactions: [transaction blobs...], // not included in the signature or stored on ledger
-    BatchSigners: [ // only sign the list of transaction hashes and probably the atomicity type
-      BatchSigner: {
+    AtomicSigners: [ // only sign the list of transaction hashes and probably the atomicity type
+      AtomicSigner: {
         Account: "r.....",
         Signature: "...."
       },
-      BatchSigner: {
+      AtomicSigner: {
         Account: "r.....",
         Signers: [...] // multisign
       },
@@ -100,7 +100,7 @@ A transaction will be considered a failure if it receives any result that is not
 
 While this field seems complicated/confusing to work with, it can easily be abstracted away (e.g. as a part of autofilling) in tooling, and it's easy for `rippled` to check a hash doesn't match its corresponding transaction in `RawTransaction`.
 
-### 2.5. `BatchSigners`
+### 2.5. `AtomicSigners`
 
 This field operates similarly to [multisign](https://xrpl.org/docs/concepts/accounts/multi-signing/) on the XRPL. It is only needed if multiple accounts' transactions are included in the `Atomic` transaction; otherwise, the normal transaction signature provides the same security guarantees.
 
@@ -133,10 +133,10 @@ This field is included if the account is signing with multi-sign (as opposed to 
 <summary>
 In this example, the user is creating an offer while trading on a DEX UI, and the second transaction is a platform fee.
 
-The inner transactions are not signed, and the `BatchSigners` field is not needed on the outer transaction, since there is only one account involved.
+The inner transactions are not signed, and the `AtomicSigners` field is not needed on the outer transaction, since there is only one account involved.
 </summary>
 
-```
+```json
 {
   TransactionType: "Atomic",
   Account: "rUserBSM7T3b6nHX3Jjua62wgX9unH8s9b",
@@ -192,7 +192,7 @@ This example shows what the ledger will look like after the transaction is confi
 Note that the inner transactions are committed as normal transactions, and the `RawTransactions` field is not included in the validated version of the outer transaction.
 </summary>
 
-```
+```json
 [
   {
     TransactionType: "OfferCreate",
@@ -243,10 +243,10 @@ Note that the inner transactions are committed as normal transactions, and the `
 <summary>
 In this example, two users are atomically swapping their tokens, XRP for GKO.
 
-The inner transactions are still not signed, but the `BatchSigners` field is needed on the outer transaction, since there are two accounts' inner transactions in this `Batch` transaction.
+The inner transactions are still not signed, but the `AtomicSigners` field is needed on the outer transaction, since there are two accounts' inner transactions in this `Atomic` transaction.
 </summary>
 
-```
+```json
 {
   TransactionType: "Atomic",
   Account: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
@@ -285,16 +285,16 @@ The inner transactions are still not signed, but the `BatchSigners` field is nee
       }
     }
   ],
-  BatchSigners: [
+  AtomicSigners: [
     {
-      BatchSigner: {
+      AtomicSigner: {
         Account: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
         SigningPubKey: "03072BBE5F93D4906FC31A690A2C269F2B9A56D60DA9C2C6C0D88FB51B644C6F94",
         Signature: "304502210083DF12FA60E2E743643889195DC42C10F62F0DE0A362330C32BBEC4D3881EECD022010579A01E052C4E587E70E5601D2F3846984DB9B16B9EBA05BAD7B51F912B899"
       }
     },
     {
-      BatchSigner: {
+      AtomicSigner: {
         Account: "rUser2fDds782Bd6eK15RDnGMtxf7m",
         SigningPubKey: "03C6AE25CD44323D52D28D7DE95598E6ABF953EECC9ABF767F13C21D421C034FAB",
         Signature: "304502210083DF12FA60E2E743643889195DC42C10F62F0DE0A362330C32BBEC4D3881EECD022010579A01E052C4E587E70E5601D2F3846984DB9B16B9EBA05BAD7B51F912B899"
@@ -318,7 +318,7 @@ This example shows what the ledger will look like after the transaction is confi
 Note that the inner transactions are committed as normal transactions, and the `RawTransactions` field is not included in the validated version of the outer transaction.
 </summary>
 
-```
+```json
 [
   {
     TransactionType: "Payment",
@@ -352,16 +352,16 @@ Note that the inner transactions are committed as normal transactions, and the `
       "A2986564A970E2B206DC8CA22F54BB8D73585527864A4484A5B0C577B6F13C95",
       "0C4316F7E7D909E11BB7DBE0EB897788835519E9950AE8E32F5182468361FE7E"
     ],
-    BatchSigners: [
+    AtomicSigners: [
       {
-        BatchSigner: {
+        AtomicSigner: {
           Account: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
           SigningPubKey: "03072BBE5F93D4906FC31A690A2C269F2B9A56D60DA9C2C6C0D88FB51B644C6F94",
           Signature: "304502210083DF12FA60E2E743643889195DC42C10F62F0DE0A362330C32BBEC4D3881EECD022010579A01E052C4E587E70E5601D2F3846984DB9B16B9EBA05BAD7B51F912B899"
         }
       },
       {
-        BatchSigner: {
+        AtomicSigner: {
           Account: "rUser2fDds782Bd6eK15RDnGMtxf7m",
           SigningPubKey: "03C6AE25CD44323D52D28D7DE95598E6ABF953EECC9ABF767F13C21D421C034FAB",
           Signature: "304502210083DF12FA60E2E743643889195DC42C10F62F0DE0A362330C32BBEC4D3881EECD022010579A01E052C4E587E70E5601D2F3846984DB9B16B9EBA05BAD7B51F912B899"
@@ -416,10 +416,10 @@ To handle cases where sequence numbers may need to be "skipped", [tickets](https
 
 That is definitely a concern. Ways to mitigate this are still being investigated. Some potential answers:
 * Charge for more extensive path usage
-* Have higher fees for batch transactions
-* Submit the batch transactions at the end of the ledger
+* Have higher fees for atomic transactions
+* Submit the atomic transactions at the end of the ledger
 
-### A.6: What error is returned if all the transactions fail in an `OR`/batch transaction?
+### A.6: What error is returned if all the transactions fail in an `OR`/`BATCH` transaction?
 
 The answer to this question is still being investigated. Some potential answers:
 * Return the first error encountered
@@ -429,7 +429,7 @@ The answer to this question is still being investigated. Some potential answers:
 
 ### A.7: Can another account sign/pay for the outer transaction if they don't have any of the inner transactions?
 
-If there are multiple parties in the inner transactions, yes. Otherwise, no. This is because in a single party `Atomic` transaction, the inner transaction's signoff is provided by `BatchSigners`.
+If there are multiple parties in the inner transactions, yes. Otherwise, no. This is because in a single party `Atomic` transaction, the inner transaction's signoff is provided by `AtomicSigners`.
 
 ### A.8: How does this work in conjunction with [XLS-49d](https://github.com/XRPLF/XRPL-Standards/discussions/144)? If I give a signer list powers over the `Atomic` transaction, can it effectively run all transaction types?
 
@@ -445,6 +445,6 @@ It has greater capabilities than just batching transactions.
 
 This was deemed unnecessary. If you have a need for this, please provide example use-cases.
 
-### A.11: What if I want the `Batch` transaction signer to handle the fees for the inner transactions?
+### A.11: What if I want the `Atomic` transaction signer to handle the fees for the inner transactions?
 
 That is not supported in this version of the spec. This is due to the added complexity of passing info about who is paying the fee down the stack.
