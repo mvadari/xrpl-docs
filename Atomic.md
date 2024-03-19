@@ -123,7 +123,7 @@ These fields are included if the account is signing with a single signature (as 
 
 This field is included if the account is signing with multi-sign (as opposed to a single signature). It operates equivalently to the [`Signers` field](https://xrpl.org/docs/references/protocol/transactions/common-fields/#signers-field) used in standard transaction multi-sign. This field holds the signatures for the `AtomicityType` and `TxnIDs` fields.
 
-## 3. How It All Works
+## 3. Examples
 
 ### 3.1. One Account
 
