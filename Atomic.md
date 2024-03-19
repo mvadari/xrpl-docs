@@ -242,6 +242,7 @@ Note that the inner transactions are committed as normal transactions, and the `
 <details open>
 <summary>
 In this example, two users are atomically swapping their tokens, XRP for GKO.
+
 The inner transactions are still not signed, but the `BatchSigners` field is needed on the outer transaction, since there are two accounts' inner transactions in this `Batch` transaction.
 </summary>
 
