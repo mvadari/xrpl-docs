@@ -134,6 +134,7 @@ In this example, the user is generating an `OfferCreate` transaction while tradi
 The inner transactions are not signed, and the `BatchSigners` field is not needed on the outer transaction, since there is only one signer.
 
 <details>
+
 ```
 {
   TransactionType: "Atomic",
@@ -180,11 +181,14 @@ The inner transactions are not signed, and the `BatchSigners` field is not neede
 }
 ```
 </details>
+
 #### 3.1.2. Sample Ledger
 
 This example shows what the ledger will look like after the transaction is confirmed.
 
 Note that the inner transactions are committed as normal transactions, and the `RawTransactions` field is not included in the validated version of the outer transaction.
+
+<details>
 
 ```
 [
@@ -227,12 +231,15 @@ Note that the inner transactions are committed as normal transactions, and the `
   }
 ]
 ```
+</details>
 
 ### 3.2. Multiple Accounts
 
 #### 3.2.1. Sample Transaction
 
 In this example, two users are atomically swapping their tokens, XRP for GKO.
+
+<details>
 
 ```
 {
@@ -295,8 +302,11 @@ In this example, two users are atomically swapping their tokens, XRP for GKO.
   TxnSignature: "30440220702ABC11419AD4940969CC32EB4D1BFDBFCA651F064F30D6E1646D74FBFC493902204E5B451B447B0F69904127F04FE71634BD825A8970B9467871DA89EEC4B021F8"
 }
 ```
+</details>
 
 #### 3.2.2. Sample Ledger
+
+<details>
 
 ```
 [
@@ -355,6 +365,7 @@ In this example, two users are atomically swapping their tokens, XRP for GKO.
   }
 ]
 ```
+</details>
 
 ## 4. Security
 
