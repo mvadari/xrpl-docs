@@ -133,6 +133,7 @@ In this example, the user is generating an `OfferCreate` transaction while tradi
 
 The inner transactions are not signed, and the `BatchSigners` field is not needed on the outer transaction, since there is only one signer.
 
+<details>
 ```
 {
   TransactionType: "Atomic",
@@ -178,7 +179,7 @@ The inner transactions are not signed, and the `BatchSigners` field is not neede
   TxnSignature: "3045022100EC5D367FAE2B461679AD446FBBE7BA260506579AF4ED5EFC3EC25F4DD1885B38022018C2327DB281743B12553C7A6DC0E45B07D3FC6983F261D7BCB474D89A0EC5B8"
 }
 ```
-
+</details>
 #### 3.1.2. Sample Ledger
 
 This example shows what the ledger will look like after the transaction is confirmed.
