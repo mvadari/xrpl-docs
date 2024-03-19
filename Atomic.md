@@ -1,6 +1,6 @@
 <pre>
 Title:       <b>Atomic/Batch Transactions</b>
-Revision:    <b>3</b> (2024-03-14)
+Revision:    <b>3</b> (2024-03-19)
 
 Author:      <a href="mailto:mvadari@ripple.com">Mayukha Vadari</a>
 
@@ -23,8 +23,10 @@ Potential use cases:
 
 This spec proposes one new transaction: `Atomic`. It will not require any new ledger objects, nor modifications to existing ledger objects. It will require an amendment, tentatively titled `featureAtomic`.
 
+The rough idea of this design is that users can include "sub-transactions" inside `Atomic`, and these transactions are processed atomically. The design also supports transactions from different accounts in the same `Atomic` wrapper transaction.
+
 ### 1.1. Terminology
-* **Inner transaction**: the sub-transactions included in the `Atomic` transaction, which are the same as the existing set of transactions.
+* **Inner transaction**: the sub-transactions included in the `Atomic` transaction, that are executed atomically.
 * **Outer transaction**: the wrapper `Atomic` transaction itself.
 
 ## 2. Transaction: `Atomic`
@@ -121,9 +123,241 @@ These fields are included if the account is signing with a single signature (as 
 
 This field is included if the account is signing with multi-sign (as opposed to a single signature). It operates equivalently to the [`Signers` field](https://xrpl.org/docs/references/protocol/transactions/common-fields/#signers-field) used in standard transaction multi-sign. This field holds the signatures for the `AtomicityType` and `TxnIDs` fields.
 
-## 3. Security
+## 3. How It All Works
 
-### 3.1. Signatures
+### 3.1. One Account
+
+#### 3.1.1. Sample Transaction
+
+In this example, the user is generating an `OfferCreate` transaction while trading on a DEX UI, and the second transaction is a platform fee.
+
+The inner transactions are not signed, and the `BatchSigners` field is not needed on the outer transaction, since there is only one signer.
+
+```
+{
+  TransactionType: "Atomic",
+  Account: "rUserBSM7T3b6nHX3Jjua62wgX9unH8s9b",
+  AtomicityType: 0,
+  TxnIDs: [
+    "7EB435C800D7DC10EAB2ADFDE02EE5667C0A63AA467F26F90FD4CBCD6903E15E",
+    "EAE6B33078075A7BA958434691B896CCA4F532D618438DE6DDC7E3FB7A4A0AAB"
+  ],
+  RawTransactions: [
+    {
+      RawTransaction: {
+        TransactionType: "OfferCreate",
+        Account: "rUserBSM7T3b6nHX3Jjua62wgX9unH8s9b",
+        TakerGets: "6000000",
+        TakerPays: {
+          currency: "GKO",
+          issuer: "ruazs5h1qEsqpke88pcqnaseXdm6od2xc",
+          value: "2"
+        },
+        Sequence: 4,
+        Fee: "12",
+        SigningPubKey: "",
+        TxnSignature: ""
+      }
+    },
+    {
+      RawTransaction: {
+        TransactionType: "Payment",
+        Account: "rUserBSM7T3b6nHX3Jjua62wgX9unH8s9b",
+        Destination: "rDEXfrontEnd23E44wKL3S6dj9FaXv",
+        Amount: "1000",
+        Sequence: 5,
+        Fee: "12",
+        SigningPubKey: "",
+        TxnSignature: ""
+      }
+    }
+  ],
+  Sequence: 6,
+  Fee: "12",
+  SigningPubKey: "022D40673B44C82DEE1DDB8B9BB53DCCE4F97B27404DB850F068DD91D685E337EA",
+  TxnSignature: "3045022100EC5D367FAE2B461679AD446FBBE7BA260506579AF4ED5EFC3EC25F4DD1885B38022018C2327DB281743B12553C7A6DC0E45B07D3FC6983F261D7BCB474D89A0EC5B8"
+}
+```
+
+#### 3.1.2. Sample Ledger
+
+This example shows what the ledger will look like after the transaction is confirmed.
+
+Note that the inner transactions are committed as normal transactions, and the `RawTransactions` field is not included in the validated version of the outer transaction.
+
+```
+[
+  {
+    TransactionType: "OfferCreate",
+    Account: "rUserBSM7T3b6nHX3Jjua62wgX9unH8s9b",
+    TakerGets: "6000000",
+    TakerPays: {
+      currency: "GKO",
+      issuer: "ruazs5h1qEsqpke88pcqnaseXdm6od2xc",
+      value: "2"
+    },
+    Sequence: 4,
+    Fee: "12",
+    SigningPubKey: "",
+    TxnSignature: ""
+  },
+  {
+    TransactionType: "Payment",
+    Account: "rUserBSM7T3b6nHX3Jjua62wgX9unH8s9b",
+    Destination: "rDEXfrontEnd23E44wKL3S6dj9FaXv",
+    Amount: "1000",
+    Sequence: 5,
+    Fee: "12",
+    SigningPubKey: "",
+    TxnSignature: ""
+  },
+  {
+    TransactionType: "Atomic",
+    Account: "rUserBSM7T3b6nHX3Jjua62wgX9unH8s9b",
+    AtomicityType: 0,
+    TxnIDs: [
+      "7EB435C800D7DC10EAB2ADFDE02EE5667C0A63AA467F26F90FD4CBCD6903E15E",
+      "EAE6B33078075A7BA958434691B896CCA4F532D618438DE6DDC7E3FB7A4A0AAB"
+    ],
+    Sequence: 6,
+    Fee: "12",
+    SigningPubKey: "022D40673B44C82DEE1DDB8B9BB53DCCE4F97B27404DB850F068DD91D685E337EA",
+    TxnSignature: "3045022100EC5D367FAE2B461679AD446FBBE7BA260506579AF4ED5EFC3EC25F4DD1885B38022018C2327DB281743B12553C7A6DC0E45B07D3FC6983F261D7BCB474D89A0EC5B8"
+  }
+]
+```
+
+### 3.2. Multiple Accounts
+
+#### 3.2.1. Sample Transaction
+
+In this example, two users are atomically swapping their tokens, XRP for GKO.
+
+```
+{
+  TransactionType: "Atomic",
+  Account: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
+  AtomicityType: 0,
+  TxnIDs: [
+    "A2986564A970E2B206DC8CA22F54BB8D73585527864A4484A5B0C577B6F13C95",
+    "0C4316F7E7D909E11BB7DBE0EB897788835519E9950AE8E32F5182468361FE7E"
+  ],
+  RawTransactions: [
+    {
+      RawTransaction: {
+        TransactionType: "Payment",
+        Account: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
+        Destination: "rUser2fDds782Bd6eK15RDnGMtxf7m",
+        Amount: "6000000",
+        Sequence: 5,
+        Fee: "12",
+        SigningPubKey: "",
+        TxnSignature: ""
+      }
+    },
+    {
+      RawTransaction: {
+        TransactionType: "Payment",
+        Account: "rUser2fDds782Bd6eK15RDnGMtxf7m",
+        Destination: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
+        Amount: {
+          currency: "GKO",
+          issuer: "ruazs5h1qEsqpke88pcqnaseXdm6od2xc",
+          value: "2"
+        },
+        Sequence: 5,
+        Fee: "12",
+        SigningPubKey: "",
+        TxnSignature: ""
+      }
+    }
+  ],
+  BatchSigners: [
+    {
+      BatchSigner: {
+        Account: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
+        SigningPubKey: "03072BBE5F93D4906FC31A690A2C269F2B9A56D60DA9C2C6C0D88FB51B644C6F94",
+        Signature: "304502210083DF12FA60E2E743643889195DC42C10F62F0DE0A362330C32BBEC4D3881EECD022010579A01E052C4E587E70E5601D2F3846984DB9B16B9EBA05BAD7B51F912B899"
+      }
+    },
+    {
+      BatchSigner: {
+        Account: "rUser2fDds782Bd6eK15RDnGMtxf7m",
+        SigningPubKey: "03C6AE25CD44323D52D28D7DE95598E6ABF953EECC9ABF767F13C21D421C034FAB",
+        Signature: "304502210083DF12FA60E2E743643889195DC42C10F62F0DE0A362330C32BBEC4D3881EECD022010579A01E052C4E587E70E5601D2F3846984DB9B16B9EBA05BAD7B51F912B899"
+      }
+    },
+  ],
+  Sequence: 6,
+  Fee: "12",
+  SigningPubKey: "03072BBE5F93D4906FC31A690A2C269F2B9A56D60DA9C2C6C0D88FB51B644C6F94",
+  TxnSignature: "30440220702ABC11419AD4940969CC32EB4D1BFDBFCA651F064F30D6E1646D74FBFC493902204E5B451B447B0F69904127F04FE71634BD825A8970B9467871DA89EEC4B021F8"
+}
+```
+
+#### 3.2.2. Sample Ledger
+
+```
+[
+  {
+    TransactionType: "Payment",
+    Account: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
+    Destination: "rUser2fDds782Bd6eK15RDnGMtxf7m",
+    Amount: "6000000",
+    Sequence: 5,
+    Fee: "12",
+    SigningPubKey: "",
+    TxnSignature: ""
+  },
+  {
+    TransactionType: "Payment",
+    Account: "rUser2fDds782Bd6eK15RDnGMtxf7m",
+    Destination: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
+    Amount: {
+      currency: "GKO",
+      issuer: "ruazs5h1qEsqpke88pcqnaseXdm6od2xc",
+      value: "2"
+    },
+    Sequence: 5,
+    Fee: "12",
+    SigningPubKey: "",
+    TxnSignature: ""
+  },
+  {
+    TransactionType: "Atomic",
+    Account: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
+    AtomicityType: 0,
+    TxnIDs: [
+      "A2986564A970E2B206DC8CA22F54BB8D73585527864A4484A5B0C577B6F13C95",
+      "0C4316F7E7D909E11BB7DBE0EB897788835519E9950AE8E32F5182468361FE7E"
+    ],
+    BatchSigners: [
+      {
+        BatchSigner: {
+          Account: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
+          SigningPubKey: "03072BBE5F93D4906FC31A690A2C269F2B9A56D60DA9C2C6C0D88FB51B644C6F94",
+          Signature: "304502210083DF12FA60E2E743643889195DC42C10F62F0DE0A362330C32BBEC4D3881EECD022010579A01E052C4E587E70E5601D2F3846984DB9B16B9EBA05BAD7B51F912B899"
+        }
+      },
+      {
+        BatchSigner: {
+          Account: "rUser2fDds782Bd6eK15RDnGMtxf7m",
+          SigningPubKey: "03C6AE25CD44323D52D28D7DE95598E6ABF953EECC9ABF767F13C21D421C034FAB",
+          Signature: "304502210083DF12FA60E2E743643889195DC42C10F62F0DE0A362330C32BBEC4D3881EECD022010579A01E052C4E587E70E5601D2F3846984DB9B16B9EBA05BAD7B51F912B899"
+        }
+      },
+    ],
+    Sequence: 6,
+    Fee: "12",
+    SigningPubKey: "03072BBE5F93D4906FC31A690A2C269F2B9A56D60DA9C2C6C0D88FB51B644C6F94",
+    TxnSignature: "30440220702ABC11419AD4940969CC32EB4D1BFDBFCA651F064F30D6E1646D74FBFC493902204E5B451B447B0F69904127F04FE71634BD825A8970B9467871DA89EEC4B021F8"
+  }
+]
+```
+
+## 4. Security
+
+### 4.1. Signatures
 
 The inner transactions are not signed for several reasons:
 * Fewer signatures for `rippled` to process, since checking signature is expensive performance-wise
