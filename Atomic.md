@@ -123,6 +123,33 @@ These fields are included if the account is signing with a single signature (as 
 
 This field is included if the account is signing with multi-sign (as opposed to a single signature). It operates equivalently to the [`Signers` field](https://xrpl.org/docs/references/protocol/transactions/common-fields/#signers-field) used in standard transaction multi-sign. This field holds the signatures for the `AtomicityType` and `TxnIDs` fields.
 
+### 2.6. Metadata
+
+The inner transactions will be committed separately to the ledger and therefore have separate metadata.
+
+For example, an `Atomic` transaction with 2 inner transactions would look like this in the ledger:
+```
+[
+  InnerTransaction1,
+  InnerTransaction2,
+  OuterTransaction
+]
+```
+
+#### 2.6.1. Inner Transactions
+
+Each inner transaction will contain the metadata for its own processing. Only the inner transactions that were actually committed to the ledger will be included. This makes it easier for legacy systems to still be able to process `Atomic` transactions as if they were normal.
+
+There will also be a pointer back to the parent outer transaction (`parent_atomic`), for ease of development (similar to the `nftoken_id` field).
+
+#### 2.6.2. Outer Transactions
+
+Each outer transaction will only contain the metadata for its sequence and fee processing, not for the inner transaction processing.
+
+There will also be a list of which transactions were actually processed, which is useful for the `ONLYONE` and `BATCH` atomicity types, since those may only process a subset of transactions.
+
+TODO: include examples and names of `AtomicExecutions`
+
 ## 3. Examples
 
 ### 3.1. One Account
