@@ -163,7 +163,7 @@ In this example, the user is creating an offer while trading on a DEX UI, and th
 The inner transactions are not signed, and the `AtomicSigners` field is not needed on the outer transaction, since there is only one account involved.
 </summary>
 
-```json
+```typescript
 {
   TransactionType: "Atomic",
   Account: "rUserBSM7T3b6nHX3Jjua62wgX9unH8s9b",
@@ -219,7 +219,7 @@ This example shows what the ledger will look like after the transaction is confi
 Note that the inner transactions are committed as normal transactions, and the `RawTransactions` field is not included in the validated version of the outer transaction.
 </summary>
 
-```json
+```typescript
 [
   {
     TransactionType: "OfferCreate",
@@ -273,7 +273,7 @@ In this example, two users are atomically swapping their tokens, XRP for GKO.
 The inner transactions are still not signed, but the `AtomicSigners` field is needed on the outer transaction, since there are two accounts' inner transactions in this `Atomic` transaction.
 </summary>
 
-```json
+```typescript
 {
   TransactionType: "Atomic",
   Account: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
@@ -345,7 +345,7 @@ This example shows what the ledger will look like after the transaction is confi
 Note that the inner transactions are committed as normal transactions, and the `RawTransactions` field is not included in the validated version of the outer transaction.
 </summary>
 
-```json
+```typescript
 [
   {
     TransactionType: "Payment",
