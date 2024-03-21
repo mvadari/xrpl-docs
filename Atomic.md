@@ -41,7 +41,7 @@ The rough idea of this design is that users can include "sub-transactions" insid
 |`TxnIDs`|✔️|`array`|`Vector256`|
 |`AtomicSigners`| |`array`|`STArray`|
 
-```json
+```typescript
 {
     TransactionType: "Atomic",
     Account: "r.....",
