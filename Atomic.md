@@ -130,9 +130,9 @@ The inner transactions will be committed separately to the ledger and therefore 
 For example, an `Atomic` transaction with 2 inner transactions would look like this in the ledger:
 ```
 [
+  OuterTransaction,
   InnerTransaction1,
-  InnerTransaction2,
-  OuterTransaction
+  InnerTransaction2
 ]
 ```
 
@@ -222,6 +222,19 @@ Note that the inner transactions are committed as normal transactions, and the `
 ```typescript
 [
   {
+    TransactionType: "Atomic",
+    Account: "rUserBSM7T3b6nHX3Jjua62wgX9unH8s9b",
+    AtomicityType: 0,
+    TxnIDs: [
+      "7EB435C800D7DC10EAB2ADFDE02EE5667C0A63AA467F26F90FD4CBCD6903E15E",
+      "EAE6B33078075A7BA958434691B896CCA4F532D618438DE6DDC7E3FB7A4A0AAB"
+    ],
+    Sequence: 6,
+    Fee: "20",
+    SigningPubKey: "022D40673B44C82DEE1DDB8B9BB53DCCE4F97B27404DB850F068DD91D685E337EA",
+    TxnSignature: "3045022100EC5D367FAE2B461679AD446FBBE7BA260506579AF4ED5EFC3EC25F4DD1885B38022018C2327DB281743B12553C7A6DC0E45B07D3FC6983F261D7BCB474D89A0EC5B8"
+  },
+  {
     TransactionType: "OfferCreate",
     Account: "rUserBSM7T3b6nHX3Jjua62wgX9unH8s9b",
     TakerGets: "6000000",
@@ -244,19 +257,6 @@ Note that the inner transactions are committed as normal transactions, and the `
     Fee: "10",
     SigningPubKey: "",
     TxnSignature: ""
-  },
-  {
-    TransactionType: "Atomic",
-    Account: "rUserBSM7T3b6nHX3Jjua62wgX9unH8s9b",
-    AtomicityType: 0,
-    TxnIDs: [
-      "7EB435C800D7DC10EAB2ADFDE02EE5667C0A63AA467F26F90FD4CBCD6903E15E",
-      "EAE6B33078075A7BA958434691B896CCA4F532D618438DE6DDC7E3FB7A4A0AAB"
-    ],
-    Sequence: 6,
-    Fee: "20",
-    SigningPubKey: "022D40673B44C82DEE1DDB8B9BB53DCCE4F97B27404DB850F068DD91D685E337EA",
-    TxnSignature: "3045022100EC5D367FAE2B461679AD446FBBE7BA260506579AF4ED5EFC3EC25F4DD1885B38022018C2327DB281743B12553C7A6DC0E45B07D3FC6983F261D7BCB474D89A0EC5B8"
   }
 ]
 ```
@@ -348,30 +348,6 @@ Note that the inner transactions are committed as normal transactions, and the `
 ```typescript
 [
   {
-    TransactionType: "Payment",
-    Account: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
-    Destination: "rUser2fDds782Bd6eK15RDnGMtxf7m",
-    Amount: "6000000",
-    Sequence: 5,
-    Fee: "10",
-    SigningPubKey: "",
-    TxnSignature: ""
-  },
-  {
-    TransactionType: "Payment",
-    Account: "rUser2fDds782Bd6eK15RDnGMtxf7m",
-    Destination: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
-    Amount: {
-      currency: "GKO",
-      issuer: "ruazs5h1qEsqpke88pcqnaseXdm6od2xc",
-      value: "2"
-    },
-    Sequence: 5,
-    Fee: "10",
-    SigningPubKey: "",
-    TxnSignature: ""
-  },
-  {
     TransactionType: "Atomic",
     Account: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
     AtomicityType: 0,
@@ -399,6 +375,30 @@ Note that the inner transactions are committed as normal transactions, and the `
     Fee: "40",
     SigningPubKey: "03072BBE5F93D4906FC31A690A2C269F2B9A56D60DA9C2C6C0D88FB51B644C6F94",
     TxnSignature: "30440220702ABC11419AD4940969CC32EB4D1BFDBFCA651F064F30D6E1646D74FBFC493902204E5B451B447B0F69904127F04FE71634BD825A8970B9467871DA89EEC4B021F8"
+  },
+  {
+    TransactionType: "Payment",
+    Account: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
+    Destination: "rUser2fDds782Bd6eK15RDnGMtxf7m",
+    Amount: "6000000",
+    Sequence: 5,
+    Fee: "10",
+    SigningPubKey: "",
+    TxnSignature: ""
+  },
+  {
+    TransactionType: "Payment",
+    Account: "rUser2fDds782Bd6eK15RDnGMtxf7m",
+    Destination: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
+    Amount: {
+      currency: "GKO",
+      issuer: "ruazs5h1qEsqpke88pcqnaseXdm6od2xc",
+      value: "2"
+    },
+    Sequence: 5,
+    Fee: "10",
+    SigningPubKey: "",
+    TxnSignature: ""
   }
 ]
 ```
@@ -406,14 +406,19 @@ Note that the inner transactions are committed as normal transactions, and the `
 
 ## 4. Security
 
-### 4.1. Signatures
+### 4.1. Trust Assumptions
 
-The inner transactions are not signed for several reasons:
-* Fewer signatures for `rippled` to process, since checking signature is expensive performance-wise
-* In multi-account usage, whoever is aggregating the inner transactions from the various parties (presumably the party signing the `Atomic` transaction) cannot just submit an inner transaction without it being part of the `Atomic` transaction (since a normal transaction needs to be signed)
-* Ease of use (fewer signatures needed)
+Regardless of how many accounts' transactions are included in an `Atomic` transaction, all accounts need to sign the collection of transactions.
 
-The inner transactions do not need to be signed because the outer transaction is signed by all parties contributing inner transactions, so the same security principles still apply.
+#### 4.1.1. Single Account
+In the single account case, this is obvious; the single account must approve all of the transactions it is submitting. No other accounts are involved, so this is a pretty straightforward case.
+
+#### 4.1.2. Multi Account
+The multi-account case is a bit more complicated and is best illustrated with an example. Let's say Alice and Bob are conducting a trustless atomic swap via a multi-account `Atomic`, with Alice providing 1000 XRP and Bob providing 1000 USD. Bob is going to submit the `Atomic` transaction, so Alice must provide her part of the swap to him.
+
+If Alice provides a fully autofilled and signed transaction to Bob, Bob could submit Alice's transaction on the ledger without submitting his and receive the 1000 XRP without losing his 1000 USD. Therefore, the inner transactions must be unsigned. 
+
+If Alice just signs her part of the `Atomic` transaction, Bob could modify his transaction to only provide 1 USD instead, thereby getting his 1000 XRP at a much cheaper rate. Therefore, the entire `Atomic` transaction (and all its inner transactions) must be signed by all parties.
 
 # Appendix
 
