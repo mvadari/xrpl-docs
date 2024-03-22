@@ -11,13 +11,18 @@ Affiliation: <a href="https://ripple.com">Ripple</a>
 
 ## Abstract
 
-There is a need for transactions to be packaged together and executed atomically.
+The XRP Ledger has a robust set of built-in features, enabling fast and efficient transactions without the need for complex smart contracts on every step. However, a key limitation exists: multiple transactions cannot be executed atomically. This means that if a complex operation requires several transactions, a failure in one can leave the system in an incomplete or unexpected state. Imagine building a house: you wouldn't want to lay the foundation and build the walls, and then discover you can't afford the roof, leaving you with an unfinished and unusable structure.
 
-Potential use cases:
-* Sending an `NFTokenMint` and `NFTokenCreateOffer` transaction in the same fell swoop (if the offer creation fails, so does the mint)
-* Sending a few different offers that might fail and only wanting one to succeed
-* Fees for platforms packaged with the actual transaction
-* Atomic swaps (if multiple accounts are involved)
+This document proposes a design for atomic transactions, a functionality that allows multiple transactions to be packaged together and executed as a single unit. It's like laying the foundation, building the walls, and raising the roof all in one single secure step, leveraging the existing strengths of the XRP Ledger. If you're unable to afford the roof, you won't even bother laying the foundation.
+
+This eliminates the risk of partial completion and unexpected outcomes, fostering a more reliable and predictable user experience for complex operations. By introducing atomic transactions, developers gain the ability to design innovative features and applications that were previously hindered by the lack of native smart contracts for conditional workflows. This empowers them to harness the full potential of the XRP Ledger's built-in features while ensuring robust execution of complex processes.
+
+Some use-cases that may be enabled by atomic transactions include:
+* All or nothing: Mint an NFT and create an offer for it in one transaction. If the offer creation fails, the NFT mint is reverted as well.
+* Trying out a few offers: Submit multiple offers with different amounts of slippage, but only one will succeed.
+* Platform fees: Package platform fees within the transaction itself, simplifying the process.
+* Atomic swaps (multi-account): Trustless token/NFT swaps between multiple accounts.
+* Withdrawing accounts (multi-account): Attempt a withdrawal from your checking account, and if that fails, withdraw from your savings account instead.
 
 ## 1. Overview
 
@@ -41,6 +46,7 @@ The rough idea of this design is that users can include "sub-transactions" insid
 |`TxnIDs`|✔️|`array`|`Vector256`|
 |`AtomicSigners`| |`array`|`STArray`|
 
+<!--
 ```typescript
 {
     TransactionType: "Atomic",
@@ -63,6 +69,7 @@ The rough idea of this design is that users can include "sub-transactions" insid
     TxnSignature: "...."
 }
 ```
+-->
 
 ### 2.1. `Fee`
 
@@ -125,9 +132,9 @@ This field is included if the account is signing with multi-sign (as opposed to 
 
 ### 2.6. Metadata
 
-The inner transactions will be committed separately to the ledger and therefore have separate metadata.
+The inner transactions will be committed separately to the ledger and will therefore have separate metadata.
 
-For example, an `Atomic` transaction with 2 inner transactions would look like this in the ledger:
+For example, a ledger that only has one `Atomic` transaction containing 2 inner transactions would look like this:
 ```
 [
   OuterTransaction,
@@ -136,13 +143,7 @@ For example, an `Atomic` transaction with 2 inner transactions would look like t
 ]
 ```
 
-#### 2.6.1. Inner Transactions
-
-Each inner transaction will contain the metadata for its own processing. Only the inner transactions that were actually committed to the ledger will be included. This makes it easier for legacy systems to still be able to process `Atomic` transactions as if they were normal.
-
-There will also be a pointer back to the parent outer transaction (`parent_atomic`), for ease of development (similar to the `nftoken_id` field).
-
-#### 2.6.2. Outer Transactions
+#### 2.6.1. Outer Transactions
 
 Each outer transaction will only contain the metadata for its sequence and fee processing, not for the inner transaction processing.
 
@@ -150,15 +151,22 @@ There will also be a list of which transactions were actually processed, which i
 
 TODO: include examples and names of `AtomicExecutions`
 
+#### 2.6.2. Inner Transactions
+
+Each inner transaction will contain the metadata for its own processing. Only the inner transactions that were actually committed to the ledger will be included. This makes it easier for legacy systems to still be able to process `Atomic` transactions as if they were normal.
+
+There will also be a pointer back to the parent outer transaction (`parent_atomic`), for ease of development (similar to the `nftoken_id` field).
+
 ## 3. Examples
 
 ### 3.1. One Account
+
+In this example, the user is creating an offer while trading on a DEX UI, and the second transaction is a platform fee.
 
 #### 3.1.1. Sample Transaction
 
 <details open>
 <summary>
-In this example, the user is creating an offer while trading on a DEX UI, and the second transaction is a platform fee.
 
 The inner transactions are not signed, and the `AtomicSigners` field is not needed on the outer transaction, since there is only one account involved.
 </summary>
@@ -202,7 +210,7 @@ The inner transactions are not signed, and the `AtomicSigners` field is not need
       }
     }
   ],
-  Sequence: 6,
+  Sequence: 3,
   Fee: "20",
   SigningPubKey: "022D40673B44C82DEE1DDB8B9BB53DCCE4F97B27404DB850F068DD91D685E337EA",
   TxnSignature: "3045022100EC5D367FAE2B461679AD446FBBE7BA260506579AF4ED5EFC3EC25F4DD1885B38022018C2327DB281743B12553C7A6DC0E45B07D3FC6983F261D7BCB474D89A0EC5B8"
@@ -229,7 +237,7 @@ Note that the inner transactions are committed as normal transactions, and the `
       "7EB435C800D7DC10EAB2ADFDE02EE5667C0A63AA467F26F90FD4CBCD6903E15E",
       "EAE6B33078075A7BA958434691B896CCA4F532D618438DE6DDC7E3FB7A4A0AAB"
     ],
-    Sequence: 6,
+    Sequence: 3,
     Fee: "20",
     SigningPubKey: "022D40673B44C82DEE1DDB8B9BB53DCCE4F97B27404DB850F068DD91D685E337EA",
     TxnSignature: "3045022100EC5D367FAE2B461679AD446FBBE7BA260506579AF4ED5EFC3EC25F4DD1885B38022018C2327DB281743B12553C7A6DC0E45B07D3FC6983F261D7BCB474D89A0EC5B8"
@@ -264,11 +272,12 @@ Note that the inner transactions are committed as normal transactions, and the `
 
 ### 3.2. Multiple Accounts
 
+In this example, two users are atomically swapping their tokens, XRP for GKO.
+
 #### 3.2.1. Sample Transaction
 
 <details open>
 <summary>
-In this example, two users are atomically swapping their tokens, XRP for GKO.
 
 The inner transactions are still not signed, but the `AtomicSigners` field is needed on the outer transaction, since there are two accounts' inner transactions in this `Atomic` transaction.
 </summary>
@@ -328,7 +337,7 @@ The inner transactions are still not signed, but the `AtomicSigners` field is ne
       }
     },
   ],
-  Sequence: 6,
+  Sequence: 4,
   Fee: "40",
   SigningPubKey: "03072BBE5F93D4906FC31A690A2C269F2B9A56D60DA9C2C6C0D88FB51B644C6F94",
   TxnSignature: "30440220702ABC11419AD4940969CC32EB4D1BFDBFCA651F064F30D6E1646D74FBFC493902204E5B451B447B0F69904127F04FE71634BD825A8970B9467871DA89EEC4B021F8"
@@ -371,7 +380,7 @@ Note that the inner transactions are committed as normal transactions, and the `
         }
       },
     ],
-    Sequence: 6,
+    Sequence: 4,
     Fee: "40",
     SigningPubKey: "03072BBE5F93D4906FC31A690A2C269F2B9A56D60DA9C2C6C0D88FB51B644C6F94",
     TxnSignature: "30440220702ABC11419AD4940969CC32EB4D1BFDBFCA651F064F30D6E1646D74FBFC493902204E5B451B447B0F69904127F04FE71634BD825A8970B9467871DA89EEC4B021F8"
