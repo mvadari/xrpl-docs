@@ -80,13 +80,16 @@ In other words, the fee is twice the base fee (a total of 20 drops when there is
  
 ### 2.2. `AtomicityType`
 
-This spec supports three types of atomicity: `ALL`, `ONLYONE`, and `BATCH` (each will have an integer value, and tooling can handle the translation between integer values and the string they represent). 
+This spec supports three types of atomicity (each will have an integer value, and tooling can handle the translation between integer values and the string they represent): 
+* `ALL` (with a value of `0`)
+* `ONLYONE` (with a value of `1`)
+* `BATCH` (with a value of `2`)
 
 If the `ALL` atomicity type is used, then all transactions must succeed for any of them to succeed.
 
 If the `ONLYONE` atomicity type is used, then the first transaction to succeed will be the only one to succeed; all other transactions either failed or were never tried. While this can sort of be done by submitting multiple transactions with the same sequence number, there is no guarantee that the transactions are processed in the same order they are sent.
 
-If the `BATCH` atomicity type is used, then all transactions will be applied until the first failure.
+If the `BATCH` atomicity type is used, then all transactions will be applied until the first failure, and all transactions after the first failure will not be applied.
 
 ### 2.3. `RawTransactions`
 
@@ -462,30 +465,32 @@ That is definitely a concern. Ways to mitigate this are still being investigated
 
 ### A.6: What error is returned if all the transactions fail in an `OR`/`BATCH` transaction?
 
-The answer to this question is still being investigated. Some potential answers:
-* Return the first error encountered
-* Return the last error encountered
-* Return a general error, `temBATCH_FAILED`/`tecBATCH_FAILED` 
-* Return a list of all the errors encountered in the metadata, for easier debugging
+A general error, `temBATCH_FAILED`/`tecBATCH_FAILED`, will be returned. A list of all the return codes encountered for the transactions that were processed will be included in the metadata, for easier debugging.
 
 ### A.7: Can another account sign/pay for the outer transaction if they don't have any of the inner transactions?
 
 If there are multiple parties in the inner transactions, yes. Otherwise, no. This is because in a single party `Atomic` transaction, the inner transaction's signoff is provided by `AtomicSigners`.
 
-### A.8: How does this work in conjunction with [XLS-49d](https://github.com/XRPLF/XRPL-Standards/discussions/144)? If I give a signer list powers over the `Atomic` transaction, can it effectively run all transaction types?
+### A.8: How is the `BATCH` atomicity type any different than existing behavior with sequence numbers?
+
+Right now, if you submit a series of transactions with consecutive sequence numbers without the use of tickets or `Atomic`, then if one fails in the middle, all subsequent transactions will also fail due to incorrect sequence numbers (since the one that failed would have the next sequence numbers).
+
+The difference between the `BATCH` atomicity type and this existing behavior is that right now, the subsequent transactions will only fail with a non-`tec` error code. If the failed transaction receives an error code starting with `tec`, then a fee is claimed and a sequence number is consumed, and the subsequent transactions will still be processed as usual.
+
+### A.9: How does this work in conjunction with [XLS-49d](https://github.com/XRPLF/XRPL-Standards/discussions/144)? If I give a signer list powers over the `Atomic` transaction, can it effectively run all transaction types?
 
 The answer to this question is still being investigated. Some potential answers:
 * All signer lists should have access to this transaction but only for the transaction types they have powers over
 * Only the global signer list can have access to this transaction
 
-### A.9: Why not call this transaction `Batch`?
+### A.10: Why not call this transaction `Batch`?
 
 It has greater capabilities than just batching transactions. 
 
-### A.10: What if I want some error code types to be allowed to proceed, just as `tesSUCCESS` would, in e.g. an `ALL` case?
+### A.11: What if I want some error code types to be allowed to proceed, just as `tesSUCCESS` would, in e.g. an `ALL` case?
 
 This was deemed unnecessary. If you have a need for this, please provide example use-cases.
 
-### A.11: What if I want the `Atomic` transaction signer to handle the fees for the inner transactions?
+### A.12: What if I want the `Atomic` transaction signer to handle the fees for the inner transactions?
 
 That is not supported in this version of the spec. This is due to the added complexity of passing info about who is paying the fee down the stack.
