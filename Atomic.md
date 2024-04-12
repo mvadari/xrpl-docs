@@ -150,9 +150,18 @@ For example, a ledger that only has one `Atomic` transaction containing 2 inner 
 
 Each outer transaction will only contain the metadata for its sequence and fee processing, not for the inner transaction processing.
 
-There will also be a list of which transactions were actually processed, which is useful for the `ONLYONE` and `BATCH` atomicity types, since those may only process a subset of transactions.
+There will also be a list of which transactions were actually processed, which is useful for the `ONLYONE` and `BATCH` atomicity types, since those may only process a subset of transactions, and for debugging with all atomicity types. This section will be called `AtomicExecutions`.
 
-TODO: include examples and names of `AtomicExecutions`
+It will contain a list of objects that have the following fields for every transaction that is processed (successfully or unsuccessfully):
+
+|FieldName | Required? | JSON Type | Internal Type |
+|:---------|:-----------|:---------------|:------------|
+|`TransactionHash`|✔️|`string`|`STUInt256`|
+|`TransactionResult`|✔️|`string`|`STUInt8`|
+
+Some important things to note:
+* It is possible that all transactions will not be included in this list. For example, when using the `ONLYONE` atomicity type, if the first transaction succeeds, then the rest of the transactions will not even be processed. 
+* Transactions will only be included in the ledger if their result code is `tesSUCCESS` _and_ if the outer transaction has a result code of `tesSUCCESS`. For example, the inner transaction might have a result code of `tesSUCCESS` without being included in the ledger if the `ALL` atomicity type is used, but one of the transaction fails.
 
 #### 2.6.2. Inner Transactions
 
