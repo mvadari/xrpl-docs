@@ -210,7 +210,7 @@ This is the (0-indexed) index of the inner transaction within the existing `Atom
 
 ### 4.1. Ledger Object ID Generation
 
-Some objects, such as [offers](https://xrpl.org/docs/references/protocol/ledger-data/ledger-entry-types/offer/#offer-id-format) and [escrows](https://xrpl.org/docs/references/protocol/ledger-data/ledger-entry-types/escrow/#escrow-id-format), use the sequence number of the creation transaction 
+Some objects, such as [offers](https://xrpl.org/docs/references/protocol/ledger-data/ledger-entry-types/offer/#offer-id-format) and [escrows](https://xrpl.org/docs/references/protocol/ledger-data/ledger-entry-types/escrow/#escrow-id-format), use the sequence number of the creation transaction as a part of their ledger entry ID generation, to ensure uniqueness of the IDs.
 
 To get around this, in single-account `Atomic` transactions, a "phantom sequence number" will be used instead. The "phantom sequence number" will be equal to `AtomicTxn.Sequence + AtomicTxn.AtomicIndex`. After all the transactions are processed, the sequence number will be incremented by the total number of inner transactions included in the `Atomic` transaction, to avoid further hash collisions.
 
