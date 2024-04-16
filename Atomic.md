@@ -81,19 +81,29 @@ In other words, the fee is twice the base fee (a total of 20 drops when there is
  
 ### 2.2. `Flags`
 
-The `Flags` field represents the **atomicity type** of the transaction.
+The `Flags` field represents the **atomicity type** of the transaction. Exactly one must be specified in an `Atomic` transaction.
 
 This spec supports four types of atomicity (each will have an integer value, and tooling can handle the translation between integer values and the string they represent): 
-* `ALL` (with a value of `0x00000001`)
-* `ONLYONE` (with a value of `0x00000002`)
-* `BATCH` (with a value of `0x00000004`)
-* `INDEPENDENT` (with a value of `0x00000008`)
+* `ALL` or `tfAll` (with a value of `0x00000001`)
+* `ONLYONE` or `tfOnlyOne` (with a value of `0x00000002`)
+* `BATCH` or `tfBatch` (with a value of `0x00000004`)
+* `INDEPENDENT` or `tfIndependent` (with a value of `0x00000008`)
 
-If the `ALL` atomicity type is used, then all transactions must succeed for any of them to succeed.
+#### 2.2.1. `ALL`
+All or nothing. All transactions must succeed for any of them to succeed.
 
-If the `ONLYONE` atomicity type is used, then the first transaction to succeed will be the only one to succeed; all other transactions either failed or were never tried. While this can sort of be done by submitting multiple transactions with the same sequence number, there is no guarantee that the transactions are processed in the same order they are sent.
+#### 2.2.2. `ONLYONE`
+The first transaction to succeed will be the only one to succeed; all other transactions either failed or were never tried.
 
-If the `BATCH` atomicity type is used, then all transactions will be applied until the first failure, and all transactions after the first failure will not be applied.
+While this can sort of be done by submitting multiple transactions with the same sequence number, there is no guarantee that the transactions are processed in the same order they are sent.
+
+#### 2.2.3. `BATCH`
+All transactions will be applied until the first failure, and all transactions after the first failure will not be applied.
+
+#### 2.2.4. `INDEPENDENT`
+All transactions will be applied, regardless of failure.
+
+While this can be achieved with tickets right now, adding it as an atomicity type allows a user to have this functionality without needing the extra reserve.
 
 ### 2.3. `RawTransactions`
 
@@ -104,6 +114,7 @@ Each inner transaction:
 * **Must not** have a sequence number. It must use a sequence number value of `0`.
 * **Must not** have a fee. It must use a fee value of `"0"`.
 * **Must not** be signed (the global transaction is already signed by all relevant parties). They must instead have an empty string (`""`) in the `SigningPubKey` and `TxnSignature` fields.
+* **Must** include an `AtomicTxn` section (described in section 3)
 
 A transaction will be considered a failure if it receives any result that is not `tesSUCCESS`.
 
