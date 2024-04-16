@@ -597,7 +597,7 @@ The difference between the `BATCH` atomicity type and this existing behavior is 
 
 ### A.8: Is it possible for inner transactions to end up in a different ledger than the outer transaction?
 
-No, because the inner transactions skip the transaction queue.
+No, because the inner transactions skip the transaction queue. They are already effectively processed by the queue via the outer transaction.
 
 ### A.9: How does this work in conjunction with [XLS-49d](https://github.com/XRPLF/XRPL-Standards/discussions/144)? If I give a signer list powers over the `Atomic` transaction, can it effectively run all transaction types?
 
