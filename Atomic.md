@@ -292,6 +292,11 @@ The inner transactions are not signed, and the `AtomicSigners` field is not need
           issuer: "ruazs5h1qEsqpke88pcqnaseXdm6od2xc",
           value: "2"
         },
+        AtomicTxn: {
+          Account: "rUserBSM7T3b6nHX3Jjua62wgX9unH8s9b",
+          OuterSequence: 3,
+          BatchIndex: 0
+        },
         Sequence: 0,
         Fee: "0",
         SigningPubKey: "",
@@ -304,6 +309,11 @@ The inner transactions are not signed, and the `AtomicSigners` field is not need
         Account: "rUserBSM7T3b6nHX3Jjua62wgX9unH8s9b",
         Destination: "rDEXfrontEnd23E44wKL3S6dj9FaXv",
         Amount: "1000",
+        AtomicTxn: {
+          Account: "rUserBSM7T3b6nHX3Jjua62wgX9unH8s9b",
+          OuterSequence: 3,
+          BatchIndex: 1
+        },
         Sequence: 0,
         Fee: "0",
         SigningPubKey: "",
@@ -352,6 +362,11 @@ Note that the inner transactions are committed as normal transactions, and the `
       issuer: "ruazs5h1qEsqpke88pcqnaseXdm6od2xc",
       value: "2"
     },
+    AtomicTxn: {
+      Account: "rUserBSM7T3b6nHX3Jjua62wgX9unH8s9b",
+      OuterSequence: 3,
+      BatchIndex: 0
+    },
     Sequence: 0,
     Fee: "0",
     SigningPubKey: "",
@@ -362,6 +377,11 @@ Note that the inner transactions are committed as normal transactions, and the `
     Account: "rUserBSM7T3b6nHX3Jjua62wgX9unH8s9b",
     Destination: "rDEXfrontEnd23E44wKL3S6dj9FaXv",
     Amount: "1000",
+    AtomicTxn: {
+      Account: "rUserBSM7T3b6nHX3Jjua62wgX9unH8s9b",
+      OuterSequence: 3,
+      BatchIndex: 1
+    },
     Sequence: 0,
     Fee: "0",
     SigningPubKey: "",
@@ -399,6 +419,12 @@ The inner transactions are still not signed, but the `AtomicSigners` field is ne
         Account: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
         Destination: "rUser2fDds782Bd6eK15RDnGMtxf7m",
         Amount: "6000000",
+        AtomicTxn: {
+          Account: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
+          OuterSequence: 4,
+          Sequence: 10,
+          BatchIndex: 0
+        },
         Sequence: 0,
         Fee: "0",
         SigningPubKey: "",
@@ -414,6 +440,12 @@ The inner transactions are still not signed, but the `AtomicSigners` field is ne
           currency: "GKO",
           issuer: "ruazs5h1qEsqpke88pcqnaseXdm6od2xc",
           value: "2"
+        },
+        AtomicTxn: {
+          Account: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
+          OuterSequence: 4,
+          Sequence: 20,
+          BatchIndex: 1
         },
         Sequence: 0,
         Fee: "0",
@@ -491,6 +523,12 @@ Note that the inner transactions are committed as normal transactions, and the `
     Account: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
     Destination: "rUser2fDds782Bd6eK15RDnGMtxf7m",
     Amount: "6000000",
+    AtomicTxn: {
+      Account: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
+      OuterSequence: 4,
+      Sequence: 10,
+      BatchIndex: 0
+    },
     Sequence: 0,
     Fee: "0",
     SigningPubKey: "",
@@ -504,6 +542,12 @@ Note that the inner transactions are committed as normal transactions, and the `
       currency: "GKO",
       issuer: "ruazs5h1qEsqpke88pcqnaseXdm6od2xc",
       value: "2"
+    },
+    AtomicTxn: {
+      Account: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
+      OuterSequence: 4,
+      Sequence: 20,
+      BatchIndex: 1
     },
     Sequence: 0,
     Fee: "0",
