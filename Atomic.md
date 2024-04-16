@@ -191,20 +191,25 @@ The fields contained in this object are:
 | Field Name | Required? | JSON Type | Internal Type |
 |------------|-----------|-----------|---------------|
 |`Account`|✔️|`string`|`AccountID`|
-|`Sequence`| ✔️|`number`|`UInt32`|
+|`OuterSequence`| ✔️|`number`|`UInt32`|
+|`Sequence`| |`number`|`UInt32`|
 |`AtomicIndex`| |`number`|`UInt8`|
 
 #### 3.1.1. `Account`
 
 This is the account that is submitting the outer `Atomic` transaction.
 
-#### 3.1.2. `Sequence`
+#### 3.1.2. `OuterSequence`
 
 This is the sequence number of the outer `Atomic` transaction. Its inclusion ensures that there are no hash collisions with other `Atomic` transactions.
 
-#### 3.1.3. `AtomicIndex`
+#### 3.1.3. `Sequence`
 
-This is the (0-indexed) index of the inner transaction within the existing `Atomic` transaction. The first inner transaction will have `AtomicIndex` value `0`, the second will be `1`, etc. Its inclusion ensures there are no hash collisions with other inner transactions within the same `Atomic` transaction.
+This is the next available sequence number for the inner transaction's account. This only needs to be included in a multi-account `Atomic` transaction. See section 4.1 for an explanation as to why this is needed.
+
+#### 3.1.4. `AtomicIndex`
+
+This is the (0-indexed) index of the inner transaction within the existing `Atomic` transaction. The first inner transaction will have `AtomicIndex` value `0`, the second will be `1`, etc. Its inclusion ensures there are no hash collisions with other inner transactions within the same `Atomic` transaction, and that the transactions are all placed in the right order.
 
 ## 4. Edge Cases of Transaction Processing
 
@@ -212,9 +217,15 @@ This is the (0-indexed) index of the inner transaction within the existing `Atom
 
 Some objects, such as [offers](https://xrpl.org/docs/references/protocol/ledger-data/ledger-entry-types/offer/#offer-id-format) and [escrows](https://xrpl.org/docs/references/protocol/ledger-data/ledger-entry-types/escrow/#escrow-id-format), use the sequence number of the creation transaction as a part of their ledger entry ID generation, to ensure uniqueness of the IDs.
 
-To get around this, in single-account `Atomic` transactions, a "phantom sequence number" will be used instead. The "phantom sequence number" will be equal to `AtomicTxn.Sequence + AtomicTxn.AtomicIndex`. After all the transactions are processed, the sequence number will be incremented by the total number of inner transactions included in the `Atomic` transaction, to avoid further hash collisions.
+To get around this, in single-account `Atomic` transactions, a "phantom sequence number" will be used instead. The "phantom sequence number" will be equal to `AtomicTxn.OuterSequence + AtomicTxn.AtomicIndex`.
 
-TBD what to do in multi-account `Atomic` transactions.
+Multi-account transactions use the same "phantom sequence number" strategy, but instead uses the equation `AtomicTxn.Sequence + AtomicTxn.AtomicIndex`, since the `OuterSequence` does not map to the inner transaction's account.
+
+### 4.2. Sequence Number Handling
+
+Section 4.1 describes how sequence numbers are used in inner transactions.
+
+The sequence numbers will always be consumed (i.e. the `AccountRoot`'s `Sequence` will be incremented) for each processed inner transaction. A transaction counts as being "processed" if it is applied to the ledger, i.e. if a `tec` or `tes` error is received. The sequence number will be incremented by the total number of inner transactions that that account had included in the `Atomic` transaction, to avoid any hash collisions.
 
 ## 5. Security
 
@@ -527,20 +538,24 @@ Right now, if you submit a series of transactions with consecutive sequence numb
 
 The difference between the `BATCH` atomicity type and this existing behavior is that right now, the subsequent transactions will only fail with a non-`tec` error code. If the failed transaction receives an error code starting with `tec`, then a fee is claimed and a sequence number is consumed, and the subsequent transactions will still be processed as usual.
 
-### A.8: How does this work in conjunction with [XLS-49d](https://github.com/XRPLF/XRPL-Standards/discussions/144)? If I give a signer list powers over the `Atomic` transaction, can it effectively run all transaction types?
+### A.8: Is it possible for inner transactions to end up in a different ledger than the outer transaction?
+
+No, because the inner transactions skip the transaction queue.
+
+### A.9: How does this work in conjunction with [XLS-49d](https://github.com/XRPLF/XRPL-Standards/discussions/144)? If I give a signer list powers over the `Atomic` transaction, can it effectively run all transaction types?
 
 The answer to this question is still being investigated. Some potential answers:
 * All signer lists should have access to this transaction but only for the transaction types they have powers over
 * Only the global signer list can have access to this transaction
 
-### A.9: Why not call this transaction `Batch`?
+### A.10: Why not call this transaction `Batch`?
 
 It has greater capabilities than just batching transactions. 
 
-### A.10: What if I want some error code types to be allowed to proceed, just as `tesSUCCESS` would, in e.g. an `ALL` case?
+### A.11: What if I want some error code types to be allowed to proceed, just as `tesSUCCESS` would, in e.g. an `ALL` case?
 
 This was deemed unnecessary. If you have a need for this, please provide example use-cases.
 
-### A.11: What if I want the `Atomic` transaction signer to handle the fees for the inner transactions?
+### A.12: What if I want the `Atomic` transaction signer to handle the fees for the inner transactions?
 
 That is not supported in this version of the spec. This is due to the added complexity of passing info about who is paying the fee down the stack.
