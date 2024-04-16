@@ -33,6 +33,7 @@ The rough idea of this design is that users can include "sub-transactions" insid
 ### 1.1. Terminology
 * **Inner transaction**: the sub-transactions included in the `Atomic` transaction, that are executed atomically.
 * **Outer transaction**: the wrapper `Atomic` transaction itself.
+* **Atomicity type**: the "mode" of atomic processing that the transaction uses. See section 2.2 for more details.
 
 ## 2. Transaction: `Atomic`
 
@@ -41,7 +42,7 @@ The rough idea of this design is that users can include "sub-transactions" insid
 |`TransactionType`|✔️|`string`|`UInt16`|
 |`Account`|✔️|`string`|`STAccount`|
 |`Fee`|✔️|`string`|`STAmount`|
-|`AtomicityType`|✔️|`number`|`UInt8`|
+|`Flags`|✔️|`number`|`UInt32`|
 |`RawTransactions`|!|`array`|`STArray`|
 |`TxnIDs`|✔️|`array`|`Vector256`|
 |`AtomicSigners`| |`array`|`STArray`|
@@ -51,7 +52,7 @@ The rough idea of this design is that users can include "sub-transactions" insid
 {
     TransactionType: "Atomic",
     Account: "r.....",
-    AtomicityType: n,
+    Flags: "1",
     TxnIDs: [transaction hashes...]
     RawTransactions: [transaction blobs...], // not included in the signature or stored on ledger
     AtomicSigners: [ // only sign the list of transaction hashes and probably the atomicity type
@@ -78,12 +79,15 @@ $$(n+2)*base\textunderscore fee$$
 
 In other words, the fee is twice the base fee (a total of 20 drops when there is no fee escalation). This is just the fee for processing the atomicity overhead; each inner transaction handles its own fees.
  
-### 2.2. `AtomicityType`
+### 2.2. `Flags`
 
-This spec supports three types of atomicity (each will have an integer value, and tooling can handle the translation between integer values and the string they represent): 
-* `ALL` (with a value of `0`)
-* `ONLYONE` (with a value of `1`)
-* `BATCH` (with a value of `2`)
+The `Flags` field represents the **atomicity type** of the transaction.
+
+This spec supports four types of atomicity (each will have an integer value, and tooling can handle the translation between integer values and the string they represent): 
+* `ALL` (with a value of `0x00000001`)
+* `ONLYONE` (with a value of `0x00000002`)
+* `BATCH` (with a value of `0x00000004`)
+* `INDEPENDENT` (with a value of `0x00000008`)
 
 If the `ALL` atomicity type is used, then all transactions must succeed for any of them to succeed.
 
@@ -128,11 +132,11 @@ This is an account that has at least one inner transaction.
 
 #### 2.5.2. `SigningPubKey` and `Signature`
 
-These fields are included if the account is signing with a single signature (as opposed to multi-sign). They sign the `AtomicityType` and `TxnIDs` fields.
+These fields are included if the account is signing with a single signature (as opposed to multi-sign). They sign the `Flags` and `TxnIDs` fields.
 
 #### 2.5.3. `Signers`
 
-This field is included if the account is signing with multi-sign (as opposed to a single signature). It operates equivalently to the [`Signers` field](https://xrpl.org/docs/references/protocol/transactions/common-fields/#signers-field) used in standard transaction multi-sign. This field holds the signatures for the `AtomicityType` and `TxnIDs` fields.
+This field is included if the account is signing with multi-sign (as opposed to a single signature). It operates equivalently to the [`Signers` field](https://xrpl.org/docs/references/protocol/transactions/common-fields/#signers-field) used in standard transaction multi-sign. This field holds the signatures for the `Flags` and `TxnIDs` fields.
 
 ### 2.6. Metadata
 
@@ -261,7 +265,7 @@ The inner transactions are not signed, and the `AtomicSigners` field is not need
 {
   TransactionType: "Atomic",
   Account: "rUserBSM7T3b6nHX3Jjua62wgX9unH8s9b",
-  AtomicityType: 0,
+  Flags: "1",
   TxnIDs: [
     "7EB435C800D7DC10EAB2ADFDE02EE5667C0A63AA467F26F90FD4CBCD6903E15E",
     "EAE6B33078075A7BA958434691B896CCA4F532D618438DE6DDC7E3FB7A4A0AAB"
@@ -318,7 +322,7 @@ Note that the inner transactions are committed as normal transactions, and the `
   {
     TransactionType: "Atomic",
     Account: "rUserBSM7T3b6nHX3Jjua62wgX9unH8s9b",
-    AtomicityType: 0,
+    Flags: "1",
     TxnIDs: [
       "7EB435C800D7DC10EAB2ADFDE02EE5667C0A63AA467F26F90FD4CBCD6903E15E",
       "EAE6B33078075A7BA958434691B896CCA4F532D618438DE6DDC7E3FB7A4A0AAB"
@@ -372,7 +376,7 @@ The inner transactions are still not signed, but the `AtomicSigners` field is ne
 {
   TransactionType: "Atomic",
   Account: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
-  AtomicityType: 0,
+  Flags: "1",
   TxnIDs: [
     "A2986564A970E2B206DC8CA22F54BB8D73585527864A4484A5B0C577B6F13C95",
     "0C4316F7E7D909E11BB7DBE0EB897788835519E9950AE8E32F5182468361FE7E"
@@ -445,7 +449,7 @@ Note that the inner transactions are committed as normal transactions, and the `
   {
     TransactionType: "Atomic",
     Account: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
-    AtomicityType: 0,
+    Flags: "1",
     TxnIDs: [
       "A2986564A970E2B206DC8CA22F54BB8D73585527864A4484A5B0C577B6F13C95",
       "0C4316F7E7D909E11BB7DBE0EB897788835519E9950AE8E32F5182468361FE7E"
