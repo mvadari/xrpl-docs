@@ -151,7 +151,7 @@ This field is included if the account is signing with multi-sign (as opposed to 
 
 ### 2.6. Metadata
 
-The inner transactions will be committed separately to the ledger and will therefore have separate metadata.
+The inner transactions will be committed separately to the ledger and will therefore have separate metadata. This is to ensure better backwards compatibility for legacy systems, so they can support `Atomic` transactions without needing any changes to their systems.
 
 For example, a ledger that only has one `Atomic` transaction containing 2 inner transactions would look like this:
 ```
