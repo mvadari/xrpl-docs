@@ -526,8 +526,6 @@ The original version of this spec supported nesting `Atomic` transactions. Howev
 
 Yes, just as they would if they were individually submitted. 
 
-TODO: maybe only the batch fee would be claimed? Maybe that fee should be higher?
-
 ### A.3: Could there be an additional atomicity type for allowing all transactions to be processed regardless of whether they succeeded?
 
 This is unnecessary, since that is equivalent to submitting the transactions normally.
