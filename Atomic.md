@@ -613,6 +613,6 @@ It has greater capabilities than just batching transactions.
 
 This was deemed unnecessary. If you have a need for this, please provide example use-cases.
 
-### A.12: What if I want the `Atomic` transaction signer to handle the fees for the inner transactions?
+### A.12: What if I want the `Atomic` inner transaction accounts to handle their own fees?
 
-That is not supported in this version of the spec. This is due to the added complexity of passing info about who is paying the fee down the stack.
+That is not supported in this version of the spec, as it is cleaner to just have one account pay the fee.
