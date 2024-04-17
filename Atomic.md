@@ -74,24 +74,26 @@ The rough idea of this design is that users can include "sub-transactions" insid
 
 ### 2.1. `Fee`
 
-The fee for the outer transaction alone is:
+The fee for the outer transaction is:
 
-$$(n+2)*base\textunderscore fee + \sum_{innerTxns} InnerTxn.Fee$$
+$$(n+2)*base\textunderscore fee + \sum_{innerTxns} Txn.Fee$$
 (where `n` is the number of signatures included in the outer transaction)
 
-In other words, the fee is twice the base fee (a total of 20 drops when there is no fee escalation), plus the sum of the transaction fees of all the inner transactions.
- 
+In other words, the fee is twice the base fee (a total of 20 drops when there is no fee escalation), plus the sum of the transaction fees of all the inner transactions (which incorporates factors like higher fees for multisign or `AMMCreate`).
+
+The fees for the individual inner transactions are paid here instead of in the inner transaction itself, to ensure that fee escalation is calculated on the total cost of the transaction instead of just the overhead.
+
 ### 2.2. `Flags`
 
 The `Flags` field represents the **atomicity type** of the transaction. Exactly one must be specified in an `Atomic` transaction.
 
 This spec supports four types of atomicity (each will have an integer value, and tooling can handle the translation between integer values and the string they represent): 
-* `ALL` or `tfAll` (with a value of `0x00000001`)
+* `ALLORNOTHING` or `tfAllOrNothing` (with a value of `0x00000001`)
 * `ONLYONE` or `tfOnlyOne` (with a value of `0x00000002`)
-* `BATCH` or `tfBatch` (with a value of `0x00000004`)
+* `UNTILFAILURE` or `tfUntilFailure` (with a value of `0x00000004`)
 * `INDEPENDENT` or `tfIndependent` (with a value of `0x00000008`)
 
-#### 2.2.1. `ALL`
+#### 2.2.1. `ALLORNOTHING`
 All or nothing. All transactions must succeed for any of them to succeed.
 
 #### 2.2.2. `ONLYONE`
@@ -99,7 +101,7 @@ The first transaction to succeed will be the only one to succeed; all other tran
 
 While this can sort of be done by submitting multiple transactions with the same sequence number, there is no guarantee that the transactions are processed in the same order they are sent.
 
-#### 2.2.3. `BATCH`
+#### 2.2.3. `UNTILFAILURE`
 All transactions will be applied until the first failure, and all transactions after the first failure will not be applied.
 
 #### 2.2.4. `INDEPENDENT`
@@ -116,11 +118,10 @@ Each inner transaction:
 * **Must not** have a sequence number. It must use a sequence number value of `0`.
 * **Must not** have a fee. It must use a fee value of `"0"`.
 * **Must not** be signed (the global transaction is already signed by all relevant parties). They must instead have an empty string (`""`) in the `SigningPubKey` and `TxnSignature` fields.
-* **Must** include an `AtomicTxn` section (described in section 3)
 
 A transaction will be considered a failure if it receives any result that is not `tesSUCCESS`.
 
-**This field is not included in the validated transaction**, since all transactions are included separately as a part of the ledger.
+**This field is not included in the validated transaction, nor is it used to compute the outer transaction signature(s)**, since all transactions are included separately as a part of the ledger.
 
 ### 2.4. `TxnIDs`
 
@@ -131,6 +132,8 @@ While this field seems complicated/confusing to work with, it can easily be abst
 ### 2.5. `AtomicSigners`
 
 This field operates similarly to [multisign](https://xrpl.org/docs/concepts/accounts/multi-signing/) on the XRPL. It is only needed if multiple accounts' transactions are included in the `Atomic` transaction; otherwise, the normal transaction signature provides the same security guarantees.
+
+Every account that has at least one inner transaction, excluding the outer account (if applicable), must have an `AtomicSigners` field.
 
 |FieldName | Required? | JSON Type | Internal Type |
 |:---------|:-----------|:---------------|:------------|
@@ -168,7 +171,7 @@ For example, a ledger that only has one `Atomic` transaction containing 2 inner 
 
 Each outer transaction will only contain the metadata for its sequence and fee processing, not for the inner transaction processing.
 
-There will also be a list of which transactions were actually processed, which is useful for the `ONLYONE` and `BATCH` atomicity types, since those may only process a subset of transactions, and for debugging with all atomicity types. This section will be called `AtomicExecutions`.
+There will also be a list of which transactions were actually processed, which is useful for the `ONLYONE` and `UNTILFAILURE` atomicity types, since those may only process a subset of transactions, and for debugging with all atomicity types. This section will be called `AtomicExecutions`.
 
 It will contain a list of objects that have the following fields for every transaction that is processed (successfully or unsuccessfully):
 
@@ -179,7 +182,7 @@ It will contain a list of objects that have the following fields for every trans
 
 Some important things to note:
 * It is possible that all transactions will not be included in this list. For example, when using the `ONLYONE` atomicity type, if the first transaction succeeds, then the rest of the transactions will not even be processed. 
-* Transactions will only be included in the ledger if their result code is `tesSUCCESS` _and_ if the outer transaction has a result code of `tesSUCCESS`. For example, the inner transaction might have a result code of `tesSUCCESS` without being included in the ledger if the `ALL` atomicity type is used, but one of the transaction fails.
+* Transactions will only be included in the ledger if their result code is `tesSUCCESS` _and_ if the outer transaction has a result code of `tesSUCCESS`. For example, the inner transaction might have a result code of `tesSUCCESS` without being included in the ledger if the `ALLORNOTHING` atomicity type is used, but one of the transaction fails.
 
 #### 2.6.2. Inner Transactions
 
@@ -201,16 +204,19 @@ We propose these modifications:
 
 ### 3.1. `AtomicTxn`
 
-The `AtomicTxn` inner object **must** be included in any inner transaction of an `Atomic` transaction. Its inclusion prevents hash collisions between identical transactions (since sequence numbers aren't included) and 
+The `AtomicTxn` inner object **must** be included in any inner transaction of an `Atomic` transaction. Its inclusion:
+* Prevents hash collisions between identical transactions (since sequence numbers aren't included).
+* Ensures that every transaction has a sequence number associated with it, so that created ledger objects that use it in their ID generation can still operate.
+* Allows users to more easily organize their transactions in the correct order.
 
 The fields contained in this object are:
 
 | Field Name | Required? | JSON Type | Internal Type |
 |------------|-----------|-----------|---------------|
 |`Account`|✔️|`string`|`AccountID`|
-|`OuterSequence`| ✔️|`number`|`UInt32`|
+|`OuterSequence`|✔️|`number`|`UInt32`|
 |`Sequence`| |`number`|`UInt32`|
-|`AtomicIndex`| |`number`|`UInt8`|
+|`AtomicIndex`|✔️|`number`|`UInt8`|
 
 #### 3.1.1. `Account`
 
@@ -242,7 +248,7 @@ Multi-account transactions use the same "phantom sequence number" strategy, but 
 
 Section 4.1 describes how sequence numbers are used in inner transactions.
 
-The sequence numbers will always be consumed (i.e. the `AccountRoot`'s `Sequence` will be incremented) for each processed inner transaction. A transaction counts as being "processed" if it is applied to the ledger, i.e. if a `tec` or `tes` error is received. The sequence number will be incremented by the total number of inner transactions that that account had included in the `Atomic` transaction, to avoid any hash collisions.
+The sequence numbers will always be consumed (i.e. the `AccountRoot`'s `Sequence` will be incremented) if any inner transactions are processed. A transaction counts as being "processed" if it is applied to the ledger, i.e. if a `tec` or `tes` error is received. The sequence number for each account will be incremented by the total number of inner transactions included in the `Atomic` transaction, to avoid any hash collisions.
 
 ## 5. Security
 
@@ -297,7 +303,7 @@ The inner transactions are not signed, and the `AtomicSigners` field is not need
         AtomicTxn: {
           Account: "rUserBSM7T3b6nHX3Jjua62wgX9unH8s9b",
           OuterSequence: 3,
-          BatchIndex: 0
+          AtomicIndex: 0
         },
         Sequence: 0,
         Fee: "0",
@@ -314,7 +320,7 @@ The inner transactions are not signed, and the `AtomicSigners` field is not need
         AtomicTxn: {
           Account: "rUserBSM7T3b6nHX3Jjua62wgX9unH8s9b",
           OuterSequence: 3,
-          BatchIndex: 1
+          AtomicIndex: 1
         },
         Sequence: 0,
         Fee: "0",
@@ -367,7 +373,7 @@ Note that the inner transactions are committed as normal transactions, and the `
     AtomicTxn: {
       Account: "rUserBSM7T3b6nHX3Jjua62wgX9unH8s9b",
       OuterSequence: 3,
-      BatchIndex: 0
+      AtomicIndex: 0
     },
     Sequence: 0,
     Fee: "0",
@@ -382,7 +388,7 @@ Note that the inner transactions are committed as normal transactions, and the `
     AtomicTxn: {
       Account: "rUserBSM7T3b6nHX3Jjua62wgX9unH8s9b",
       OuterSequence: 3,
-      BatchIndex: 1
+      AtomicIndex: 1
     },
     Sequence: 0,
     Fee: "0",
@@ -424,8 +430,8 @@ The inner transactions are still not signed, but the `AtomicSigners` field is ne
         AtomicTxn: {
           Account: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
           OuterSequence: 4,
-          Sequence: 10,
-          BatchIndex: 0
+          Sequence: 4,
+          AtomicIndex: 0
         },
         Sequence: 0,
         Fee: "0",
@@ -447,7 +453,7 @@ The inner transactions are still not signed, but the `AtomicSigners` field is ne
           Account: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
           OuterSequence: 4,
           Sequence: 20,
-          BatchIndex: 1
+          AtomicIndex: 1
         },
         Sequence: 0,
         Fee: "0",
@@ -528,8 +534,8 @@ Note that the inner transactions are committed as normal transactions, and the `
     AtomicTxn: {
       Account: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
       OuterSequence: 4,
-      Sequence: 10,
-      BatchIndex: 0
+      Sequence: 4,
+      AtomicIndex: 0
     },
     Sequence: 0,
     Fee: "0",
@@ -549,7 +555,7 @@ Note that the inner transactions are committed as normal transactions, and the `
       Account: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
       OuterSequence: 4,
       Sequence: 20,
-      BatchIndex: 1
+      AtomicIndex: 1
     },
     Sequence: 0,
     Fee: "0",
@@ -583,23 +589,23 @@ That is definitely a concern. Ways to mitigate this are still being investigated
 * Have higher fees for atomic transactions
 * Submit the atomic transactions at the end of the ledger
 
-### A.5: What error is returned if all the transactions fail in an `OR`/`BATCH` transaction?
+### A.5: What error is returned if all the transactions fail in an `ONLYONE`/`UNTILFAILURE` transaction?
 
-A general error, `temBATCH_FAILED`/`tecBATCH_FAILED`, will be returned. A list of all the return codes encountered for the transactions that were processed will be included in the metadata, for easier debugging.
+A general error, `temATOMIC_FAILED`/`tecATOMIC_FAILED`, will be returned. A list of all the return codes encountered for the transactions that were processed will be included in the metadata, for easier debugging.
 
 ### A.6: Can another account sign/pay for the outer transaction if they don't have any of the inner transactions?
 
-If there are multiple parties in the inner transactions, yes. Otherwise, no. This is because in a single party `Atomic` transaction, the inner transaction's signoff is provided by `AtomicSigners`.
+If there are multiple parties in the inner transactions, yes. Otherwise, no. This is because in a single party `Atomic` transaction, the inner transaction's signoff is provided by the normal transaction signing fields (`SigningPubKey` and `TxnSignature`).
 
-### A.7: How is the `BATCH` atomicity type any different than existing behavior with sequence numbers?
+### A.7: How is the `UNTILFAILURE` atomicity type any different than existing behavior with sequence numbers?
 
 Right now, if you submit a series of transactions with consecutive sequence numbers without the use of tickets or `Atomic`, then if one fails in the middle, all subsequent transactions will also fail due to incorrect sequence numbers (since the one that failed would have the next sequence numbers).
 
-The difference between the `BATCH` atomicity type and this existing behavior is that right now, the subsequent transactions will only fail with a non-`tec` error code. If the failed transaction receives an error code starting with `tec`, then a fee is claimed and a sequence number is consumed, and the subsequent transactions will still be processed as usual.
+The difference between the `UNTILFAILURE` atomicity type and this existing behavior is that right now, the subsequent transactions will only fail with a non-`tec` error code. If the failed transaction receives an error code starting with `tec`, then a fee is claimed and a sequence number is consumed, and the subsequent transactions will still be processed as usual.
 
 ### A.8: Is it possible for inner transactions to end up in a different ledger than the outer transaction?
 
-No, because the inner transactions skip the transaction queue. They are already effectively processed by the queue via the outer transaction.
+No, because the inner transactions skip the transaction queue. They are already effectively processed by the queue via the outer transaction. Inner transactions will also be excluded from consensus for the same reason.
 
 ### A.9: How does this work in conjunction with [XLS-49d](https://github.com/XRPLF/XRPL-Standards/discussions/144)? If I give a signer list powers over the `Atomic` transaction, can it effectively run all transaction types?
 
@@ -611,10 +617,10 @@ The answer to this question is still being investigated. Some potential answers:
 
 It has greater capabilities than just batching transactions. 
 
-### A.11: What if I want some error code types to be allowed to proceed, just as `tesSUCCESS` would, in e.g. an `ALL` case?
+### A.11: What if I want some error code types to be allowed to proceed, just as `tesSUCCESS` would, in e.g. an `ALLORNOTHING` case?
 
 This was deemed unnecessary. If you have a need for this, please provide example use-cases.
 
 ### A.12: What if I want the `Atomic` inner transaction accounts to handle their own fees?
 
-That is not supported in this version of the spec, as it is cleaner to just have one account pay the fee.
+That is not supported in this version of the spec, as it is cleaner to just have one account pay the fee. This also allows fee escalation to be calculated on the total cost of the transaction, instead of just on the overhead.
