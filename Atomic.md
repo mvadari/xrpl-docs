@@ -613,14 +613,10 @@ The answer to this question is still being investigated. Some potential answers:
 * All signer lists should have access to this transaction but only for the transaction types they have powers over
 * Only the global signer list can have access to this transaction
 
-### A.10: Why not call this transaction `Batch`?
-
-It has greater capabilities than just batching transactions. 
-
-### A.11: What if I want some error code types to be allowed to proceed, just as `tesSUCCESS` would, in e.g. an `ALLORNOTHING` case?
+### A.10: What if I want some error code types to be allowed to proceed, just as `tesSUCCESS` would, in e.g. an `ALLORNOTHING` case?
 
 This was deemed unnecessary. If you have a need for this, please provide example use-cases.
 
-### A.12: What if I want the `Batch` inner transaction accounts to handle their own fees?
+### A.11: What if I want the `Batch` inner transaction accounts to handle their own fees?
 
 That is not supported in this version of the spec, as it is cleaner to just have one account pay the fee. This also allows fee escalation to be calculated on the total cost of the transaction, instead of just on the overhead.
