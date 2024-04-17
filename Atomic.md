@@ -1,6 +1,6 @@
 <pre>
 Title:       <b>Atomic/Batch Transactions</b>
-Revision:    <b>3</b> (2024-04-08)
+Revision:    <b>3</b> (2024-04-17)
 
 Author:      <a href="mailto:mvadari@ripple.com">Mayukha Vadari</a>
 
@@ -17,7 +17,7 @@ This document proposes a design for atomic transactions, a functionality that al
 
 This eliminates the risk of partial completion and unexpected outcomes, fostering a more reliable and predictable user experience for complex operations. By introducing atomic transactions, developers gain the ability to design innovative features and applications that were previously hindered by the lack of native smart contracts for conditional workflows. This empowers them to harness the full potential of the XRP Ledger's built-in features while ensuring robust execution of complex processes.
 
-Some use-cases that may be enabled by atomic transactions include:
+Some use-cases that may be enabled by atomic transactions include (but are certainly not limited to):
 * All or nothing: Mint an NFT and create an offer for it in one transaction. If the offer creation fails, the NFT mint is reverted as well.
 * Trying out a few offers: Submit multiple offers with different amounts of slippage, but only one will succeed.
 * Platform fees: Package platform fees within the transaction itself, simplifying the process.
@@ -33,7 +33,7 @@ The rough idea of this design is that users can include "sub-transactions" insid
 ### 1.1. Terminology
 * **Inner transaction**: the sub-transactions included in the `Atomic` transaction, that are executed atomically.
 * **Outer transaction**: the wrapper `Atomic` transaction itself.
-* **Atomicity type**: the "mode" of atomic processing that the transaction uses. See section 2.2 for more details.
+* **Batch mode** or **mode**: the "mode" of batch processing that the transaction uses. See section 2.2 for more details.
 
 ## 2. Transaction: `Atomic`
 
@@ -55,7 +55,7 @@ The rough idea of this design is that users can include "sub-transactions" insid
     Flags: "1",
     TxnIDs: [transaction hashes...]
     RawTransactions: [transaction blobs...], // not included in the signature or stored on ledger
-    AtomicSigners: [ // only sign the list of transaction hashes and probably the atomicity type
+    AtomicSigners: [ // only sign the list of transaction hashes and probably the batch mode
       AtomicSigner: {
         Account: "r.....",
         Signature: "...."
@@ -85,9 +85,9 @@ The fees for the individual inner transactions are paid here instead of in the i
 
 ### 2.2. `Flags`
 
-The `Flags` field represents the **atomicity type** of the transaction. Exactly one must be specified in an `Atomic` transaction.
+The `Flags` field represents the **batch mode** of the transaction. Exactly one must be specified in an `Atomic` transaction.
 
-This spec supports four types of atomicity (each will have an integer value, and tooling can handle the translation between integer values and the string they represent): 
+This spec supports four modes: 
 * `ALLORNOTHING` or `tfAllOrNothing` (with a value of `0x00000001`)
 * `ONLYONE` or `tfOnlyOne` (with a value of `0x00000002`)
 * `UNTILFAILURE` or `tfUntilFailure` (with a value of `0x00000004`)
@@ -107,7 +107,7 @@ All transactions will be applied until the first failure, and all transactions a
 #### 2.2.4. `INDEPENDENT`
 All transactions will be applied, regardless of failure.
 
-While this can be achieved with tickets right now, adding it as an atomicity type allows a user to have this functionality without needing the extra reserve.
+While this can be achieved with tickets right now, adding it as a separate mode allows a user to have this functionality without needing the extra reserve.
 
 ### 2.3. `RawTransactions`
 
@@ -171,7 +171,7 @@ For example, a ledger that only has one `Atomic` transaction containing 2 inner 
 
 Each outer transaction will only contain the metadata for its sequence and fee processing, not for the inner transaction processing.
 
-There will also be a list of which transactions were actually processed, which is useful for the `ONLYONE` and `UNTILFAILURE` atomicity types, since those may only process a subset of transactions, and for debugging with all atomicity types. This section will be called `AtomicExecutions`.
+There will also be a list of which transactions were actually processed, which is useful for the `ONLYONE` and `UNTILFAILURE` modes, since those may only process a subset of transactions, and for debugging with all modes. This section will be called `AtomicExecutions`.
 
 It will contain a list of objects that have the following fields for every transaction that is processed (successfully or unsuccessfully):
 
@@ -181,8 +181,8 @@ It will contain a list of objects that have the following fields for every trans
 |`TransactionResult`|✔️|`string`|`STUInt8`|
 
 Some important things to note:
-* It is possible that all transactions will not be included in this list. For example, when using the `ONLYONE` atomicity type, if the first transaction succeeds, then the rest of the transactions will not even be processed. 
-* Transactions will only be included in the ledger if their result code is `tesSUCCESS` _and_ if the outer transaction has a result code of `tesSUCCESS`. For example, the inner transaction might have a result code of `tesSUCCESS` without being included in the ledger if the `ALLORNOTHING` atomicity type is used, but one of the transaction fails.
+* It is possible that all transactions will not be included in this list. For example, when using the `ONLYONE` mode, if the first transaction succeeds, then the rest of the transactions will not even be processed. 
+* Transactions will only be included in the ledger if their result code is `tesSUCCESS` _and_ if the outer transaction has a result code of `tesSUCCESS`. For example, the inner transaction might have a result code of `tesSUCCESS` without being included in the ledger if the `ALLORNOTHING` mode is used, but one of the transaction fails.
 
 #### 2.6.2. Inner Transactions
 
@@ -578,7 +578,7 @@ The original version of this spec supported nesting `Atomic` transactions. Howev
 
 Yes, just as they would if they were individually submitted. 
 
-### A.3: Could there be an additional atomicity type for allowing all transactions to be processed regardless of whether they succeeded?
+### A.3: Could there be an additional mode for allowing all transactions to be processed regardless of whether they succeeded?
 
 This is unnecessary, since that is equivalent to submitting the transactions normally.
 
@@ -597,11 +597,11 @@ A general error, `temATOMIC_FAILED`/`tecATOMIC_FAILED`, will be returned. A list
 
 If there are multiple parties in the inner transactions, yes. Otherwise, no. This is because in a single party `Atomic` transaction, the inner transaction's signoff is provided by the normal transaction signing fields (`SigningPubKey` and `TxnSignature`).
 
-### A.7: How is the `UNTILFAILURE` atomicity type any different than existing behavior with sequence numbers?
+### A.7: How is the `UNTILFAILURE` mode any different than existing behavior with sequence numbers?
 
 Right now, if you submit a series of transactions with consecutive sequence numbers without the use of tickets or `Atomic`, then if one fails in the middle, all subsequent transactions will also fail due to incorrect sequence numbers (since the one that failed would have the next sequence numbers).
 
-The difference between the `UNTILFAILURE` atomicity type and this existing behavior is that right now, the subsequent transactions will only fail with a non-`tec` error code. If the failed transaction receives an error code starting with `tec`, then a fee is claimed and a sequence number is consumed, and the subsequent transactions will still be processed as usual.
+The difference between the `UNTILFAILURE` mode and this existing behavior is that right now, the subsequent transactions will only fail with a non-`tec` error code. If the failed transaction receives an error code starting with `tec`, then a fee is claimed and a sequence number is consumed, and the subsequent transactions will still be processed as usual.
 
 ### A.8: Is it possible for inner transactions to end up in a different ledger than the outer transaction?
 
