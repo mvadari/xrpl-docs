@@ -107,8 +107,6 @@ All transactions will be applied until the first failure, and all transactions a
 #### 2.2.4. `INDEPENDENT`
 All transactions will be applied, regardless of failure.
 
-While this can be achieved with tickets right now, adding it as a separate mode allows a user to have this functionality without needing the extra reserve.
-
 ### 2.3. `RawTransactions`
 
 `RawTransactions` contains the list of transactions that will be applied. There can be up to 8 transactions included. These transactions can come from one account or multiple accounts.
@@ -603,20 +601,26 @@ Right now, if you submit a series of transactions with consecutive sequence numb
 
 The difference between the `UNTILFAILURE` mode and this existing behavior is that right now, the subsequent transactions will only fail with a non-`tec` error code. If the failed transaction receives an error code starting with `tec`, then a fee is claimed and a sequence number is consumed, and the subsequent transactions will still be processed as usual.
 
-### A.8: Is it possible for inner transactions to end up in a different ledger than the outer transaction?
+### A8: How is the `INDEPENDENT` mode any different than existing behavior with [tickets](https://xrpl.org/docs/concepts/accounts/tickets)?
+
+Tickets require temporarily having a reserve for all the tickets you want to create, but an `INDEPENDENT` mode `Batch` transaction doesn't, for the low cost of 10 extra drops.
+
+On the flip side, tickets are still needed for other use-cases, such as needing to coordinate multiple signers or needing out-of-order transactions.
+
+### A.9: Is it possible for inner transactions to end up in a different ledger than the outer transaction?
 
 No, because the inner transactions skip the transaction queue. They are already effectively processed by the queue via the outer transaction. Inner transactions will also be excluded from consensus for the same reason.
 
-### A.9: How does this work in conjunction with [XLS-49d](https://github.com/XRPLF/XRPL-Standards/discussions/144)? If I give a signer list powers over the `Batch` transaction, can it effectively run all transaction types?
+### A.10: How does this work in conjunction with [XLS-49d](https://github.com/XRPLF/XRPL-Standards/discussions/144)? If I give a signer list powers over the `Batch` transaction, can it effectively run all transaction types?
 
 The answer to this question is still being investigated. Some potential answers:
 * All signer lists should have access to this transaction but only for the transaction types they have powers over
 * Only the global signer list can have access to this transaction
 
-### A.10: What if I want some error code types to be allowed to proceed, just as `tesSUCCESS` would, in e.g. an `ALLORNOTHING` case?
+### A.11: What if I want some error code types to be allowed to proceed, just as `tesSUCCESS` would, in e.g. an `ALLORNOTHING` case?
 
 This was deemed unnecessary. If you have a need for this, please provide example use-cases.
 
-### A.11: What if I want the `Batch` inner transaction accounts to handle their own fees?
+### A.12: What if I want the inner transaction accounts to handle their own fees?
 
 That is not supported in this version of the spec, as it is cleaner to just have one account pay the fee. This also allows fee escalation to be calculated on the total cost of the transaction, instead of just on the overhead.
