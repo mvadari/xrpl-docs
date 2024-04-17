@@ -74,10 +74,12 @@ The rough idea of this design is that users can include "sub-transactions" insid
 
 ### 2.1. `Fee`
 
-$$(n+2)*base\textunderscore fee$$
+The fee for the outer transaction alone is:
+
+$$(n+2)*base\textunderscore fee + \sum_{innerTxns} InnerTxn.Fee$$
 (where `n` is the number of signatures included in the outer transaction)
 
-In other words, the fee is twice the base fee (a total of 20 drops when there is no fee escalation). This is just the fee for processing the atomicity overhead; each inner transaction handles its own fees.
+In other words, the fee is twice the base fee (a total of 20 drops when there is no fee escalation), plus the sum of the transaction fees of all the inner transactions.
  
 ### 2.2. `Flags`
 
