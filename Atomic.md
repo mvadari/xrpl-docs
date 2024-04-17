@@ -188,7 +188,7 @@ Some important things to note:
 
 Each inner transaction will contain the metadata for its own processing. Only the inner transactions that were actually committed to the ledger will be included. This makes it easier for legacy systems to still be able to process `Batch` transactions as if they were normal.
 
-There will also be a pointer back to the parent outer transaction (`parent_atomic`), for ease of development (similar to the `nftoken_id` field).
+There will also be a pointer back to the parent outer transaction (`parent_batch`), for ease of development (similar to the `nftoken_id` field).
 
 ## 3. Transaction Common Fields
 
