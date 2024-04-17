@@ -591,7 +591,7 @@ That is definitely a concern. Ways to mitigate this are still being investigated
 
 ### A.5: What error is returned if all the transactions fail in an `ONLYONE`/`UNTILFAILURE` transaction?
 
-A general error, `temATOMIC_FAILED`/`tecATOMIC_FAILED`, will be returned. A list of all the return codes encountered for the transactions that were processed will be included in the metadata, for easier debugging.
+A general error, `temBATCH_FAILED`/`tecBATCH_FAILED`, will be returned. A list of all the return codes encountered for the transactions that were processed will be included in the metadata, for easier debugging.
 
 ### A.6: Can another account sign/pay for the outer transaction if they don't have any of the inner transactions?
 
