@@ -13,11 +13,11 @@ Affiliation: <a href="https://ripple.com">Ripple</a>
 
 The XRP Ledger has a robust set of built-in features, enabling fast and efficient transactions without the need for complex smart contracts on every step. However, a key limitation exists: multiple transactions cannot be executed atomically. This means that if a complex operation requires several transactions, a failure in one can leave the system in an incomplete or unexpected state. Imagine building a house: you wouldn't want to lay the foundation and build the walls, and then discover you can't afford the roof, leaving you with an unfinished and unusable structure.
 
-This document proposes a design for atomic transactions, a functionality that allows multiple transactions to be packaged together and executed as a single unit. It's like laying the foundation, building the walls, and raising the roof all in one single secure step, leveraging the existing strengths of the XRP Ledger. If you're unable to afford the roof, you won't even bother laying the foundation.
+This document proposes a design to allow multiple transactions to be packaged together and executed as a single unit. It's like laying the foundation, building the walls, and raising the roof all in one single secure step, leveraging the existing strengths of the XRP Ledger. If you're unable to afford the roof, you won't even bother laying the foundation.
 
-This eliminates the risk of partial completion and unexpected outcomes, fostering a more reliable and predictable user experience for complex operations. By introducing atomic transactions, developers gain the ability to design innovative features and applications that were previously hindered by the lack of native smart contracts for conditional workflows. This empowers them to harness the full potential of the XRP Ledger's built-in features while ensuring robust execution of complex processes.
+This eliminates the risk of partial completion and unexpected outcomes, fostering a more reliable and predictable user experience for complex operations. By introducing these batch transactions, developers gain the ability to design innovative features and applications that were previously hindered by the lack of native smart contracts for conditional workflows. This empowers them to harness the full potential of the XRP Ledger's built-in features while ensuring robust execution of complex processes.
 
-Some use-cases that may be enabled by atomic transactions include (but are certainly not limited to):
+Some use-cases that may be enabled by batch transactions include (but are certainly not limited to):
 * All or nothing: Mint an NFT and create an offer for it in one transaction. If the offer creation fails, the NFT mint is reverted as well.
 * Trying out a few offers: Submit multiple offers with different amounts of slippage, but only one will succeed.
 * Platform fees: Package platform fees within the transaction itself, simplifying the process.
@@ -26,16 +26,16 @@ Some use-cases that may be enabled by atomic transactions include (but are certa
 
 ## 1. Overview
 
-This spec proposes one new transaction: `Atomic`. It also proposes an addition to the common fields of all transactions. It will not require any new ledger objects, nor modifications to existing ledger objects. It will require an amendment, tentatively titled `featureAtomic`.
+This spec proposes one new transaction: `Batch`. It also proposes an addition to the common fields of all transactions. It will not require any new ledger objects, nor modifications to existing ledger objects. It will require an amendment, tentatively titled `featureBatch`.
 
-The rough idea of this design is that users can include "sub-transactions" inside `Atomic`, and these transactions are processed atomically. The design also supports transactions from different accounts in the same `Atomic` wrapper transaction.
+The rough idea of this design is that users can include "sub-transactions" inside `Batch`, and these transactions are processed atomically. The design also supports transactions from different accounts in the same `Batch` wrapper transaction.
 
 ### 1.1. Terminology
-* **Inner transaction**: the sub-transactions included in the `Atomic` transaction, that are executed atomically.
-* **Outer transaction**: the wrapper `Atomic` transaction itself.
+* **Inner transaction**: the sub-transactions included in the `Batch` transaction, that are executed atomically.
+* **Outer transaction**: the wrapper `Batch` transaction itself.
 * **Batch mode** or **mode**: the "mode" of batch processing that the transaction uses. See section 2.2 for more details.
 
-## 2. Transaction: `Atomic`
+## 2. Transaction: `Batch`
 
 |FieldName | Required? | JSON Type | Internal Type |
 |:---------|:-----------|:---------------|:------------|
@@ -45,22 +45,22 @@ The rough idea of this design is that users can include "sub-transactions" insid
 |`Flags`|✔️|`number`|`UInt32`|
 |`RawTransactions`|!|`array`|`STArray`|
 |`TxnIDs`|✔️|`array`|`Vector256`|
-|`AtomicSigners`| |`array`|`STArray`|
+|`BatchSigners`| |`array`|`STArray`|
 
 <!--
 ```typescript
 {
-    TransactionType: "Atomic",
+    TransactionType: "Batch",
     Account: "r.....",
     Flags: "1",
     TxnIDs: [transaction hashes...]
     RawTransactions: [transaction blobs...], // not included in the signature or stored on ledger
-    AtomicSigners: [ // only sign the list of transaction hashes and probably the batch mode
-      AtomicSigner: {
+    BatchSigners: [ // only sign the list of transaction hashes and probably the batch mode
+      BatchSigner: {
         Account: "r.....",
         Signature: "...."
       },
-      AtomicSigner: {
+      BatchSigner: {
         Account: "r.....",
         Signers: [...] // multisign
       },
@@ -85,7 +85,7 @@ The fees for the individual inner transactions are paid here instead of in the i
 
 ### 2.2. `Flags`
 
-The `Flags` field represents the **batch mode** of the transaction. Exactly one must be specified in an `Atomic` transaction.
+The `Flags` field represents the **batch mode** of the transaction. Exactly one must be specified in a `Batch` transaction.
 
 This spec supports four modes: 
 * `ALLORNOTHING` or `tfAllOrNothing` (with a value of `0x00000001`)
@@ -114,7 +114,7 @@ While this can be achieved with tickets right now, adding it as a separate mode 
 `RawTransactions` contains the list of transactions that will be applied. There can be up to 8 transactions included. These transactions can come from one account or multiple accounts.
 
 Each inner transaction:
-* **Must** contain an `AtomicTxn` field (see section 3 for details).
+* **Must** contain a `BatchTxn` field (see section 3 for details).
 * **Must not** have a sequence number. It must use a sequence number value of `0`.
 * **Must not** have a fee. It must use a fee value of `"0"`.
 * **Must not** be signed (the global transaction is already signed by all relevant parties). They must instead have an empty string (`""`) in the `SigningPubKey` and `TxnSignature` fields.
@@ -125,15 +125,15 @@ A transaction will be considered a failure if it receives any result that is not
 
 ### 2.4. `TxnIDs`
 
-`TxnIDs` contains a list of the transaction hashes/IDs for all the transactions contained in `RawTransactions`. This is the only part of the inner transactions that is saved as a part of the ledger within the `Atomic` transaction, since the inner transactions themselves will be their own transactions on-ledger. The hashes in `TxnIDs` **must** be in the same order as the raw transactions in `RawTransactions`.
+`TxnIDs` contains a list of the transaction hashes/IDs for all the transactions contained in `RawTransactions`. This is the only part of the inner transactions that is saved as a part of the ledger within the `Batch` transaction, since the inner transactions themselves will be their own transactions on-ledger. The hashes in `TxnIDs` **must** be in the same order as the raw transactions in `RawTransactions`.
 
 While this field seems complicated/confusing to work with, it can easily be abstracted away (e.g. as a part of autofilling) in tooling, and it's easy for `rippled` to check a hash doesn't match its corresponding transaction in `RawTransaction`.
 
-### 2.5. `AtomicSigners`
+### 2.5. `BatchSigners`
 
-This field operates similarly to [multisign](https://xrpl.org/docs/concepts/accounts/multi-signing/) on the XRPL. It is only needed if multiple accounts' transactions are included in the `Atomic` transaction; otherwise, the normal transaction signature provides the same security guarantees.
+This field operates similarly to [multisign](https://xrpl.org/docs/concepts/accounts/multi-signing/) on the XRPL. It is only needed if multiple accounts' transactions are included in the `Batch` transaction; otherwise, the normal transaction signature provides the same security guarantees.
 
-Every account that has at least one inner transaction, excluding the outer account (if applicable), must have an `AtomicSigners` field.
+Every account that has at least one inner transaction, excluding the outer account (if applicable), must have a `BatchSigners` field.
 
 |FieldName | Required? | JSON Type | Internal Type |
 |:---------|:-----------|:---------------|:------------|
@@ -156,9 +156,9 @@ This field is included if the account is signing with multi-sign (as opposed to 
 
 ### 2.6. Metadata
 
-The inner transactions will be committed separately to the ledger and will therefore have separate metadata. This is to ensure better backwards compatibility for legacy systems, so they can support `Atomic` transactions without needing any changes to their systems.
+The inner transactions will be committed separately to the ledger and will therefore have separate metadata. This is to ensure better backwards compatibility for legacy systems, so they can support `Batch` transactions without needing any changes to their systems.
 
-For example, a ledger that only has one `Atomic` transaction containing 2 inner transactions would look like this:
+For example, a ledger that only has one `Batch` transaction containing 2 inner transactions would look like this:
 ```
 [
   OuterTransaction,
@@ -171,7 +171,7 @@ For example, a ledger that only has one `Atomic` transaction containing 2 inner 
 
 Each outer transaction will only contain the metadata for its sequence and fee processing, not for the inner transaction processing.
 
-There will also be a list of which transactions were actually processed, which is useful for the `ONLYONE` and `UNTILFAILURE` modes, since those may only process a subset of transactions, and for debugging with all modes. This section will be called `AtomicExecutions`.
+There will also be a list of which transactions were actually processed, which is useful for the `ONLYONE` and `UNTILFAILURE` modes, since those may only process a subset of transactions, and for debugging with all modes. This section will be called `BatchExecutions`.
 
 It will contain a list of objects that have the following fields for every transaction that is processed (successfully or unsuccessfully):
 
@@ -186,7 +186,7 @@ Some important things to note:
 
 #### 2.6.2. Inner Transactions
 
-Each inner transaction will contain the metadata for its own processing. Only the inner transactions that were actually committed to the ledger will be included. This makes it easier for legacy systems to still be able to process `Atomic` transactions as if they were normal.
+Each inner transaction will contain the metadata for its own processing. Only the inner transactions that were actually committed to the ledger will be included. This makes it easier for legacy systems to still be able to process `Batch` transactions as if they were normal.
 
 There will also be a pointer back to the parent outer transaction (`parent_atomic`), for ease of development (similar to the `nftoken_id` field).
 
@@ -200,11 +200,11 @@ We propose these modifications:
 
 | Field Name | Required? | JSON Type | Internal Type |
 |------------|-----------|-----------|---------------|
-|`AtomicTxn`| |`object`|`STObject`|
+|`BatchTxn`| |`object`|`STObject`|
 
-### 3.1. `AtomicTxn`
+### 3.1. `BatchTxn`
 
-The `AtomicTxn` inner object **must** be included in any inner transaction of an `Atomic` transaction. Its inclusion:
+The `BatchTxn` inner object **must** be included in any inner transaction of a `Batch` transaction. Its inclusion:
 * Prevents hash collisions between identical transactions (since sequence numbers aren't included).
 * Ensures that every transaction has a sequence number associated with it, so that created ledger objects that use it in their ID generation can still operate.
 * Allows users to more easily organize their transactions in the correct order.
@@ -216,23 +216,23 @@ The fields contained in this object are:
 |`Account`|✔️|`string`|`AccountID`|
 |`OuterSequence`|✔️|`number`|`UInt32`|
 |`Sequence`| |`number`|`UInt32`|
-|`AtomicIndex`|✔️|`number`|`UInt8`|
+|`BatchIndex`|✔️|`number`|`UInt8`|
 
 #### 3.1.1. `Account`
 
-This is the account that is submitting the outer `Atomic` transaction.
+This is the account that is submitting the outer `Batch` transaction.
 
 #### 3.1.2. `OuterSequence`
 
-This is the sequence number of the outer `Atomic` transaction. Its inclusion ensures that there are no hash collisions with other `Atomic` transactions.
+This is the sequence number of the outer `Batch` transaction. Its inclusion ensures that there are no hash collisions with other `Batch` transactions.
 
 #### 3.1.3. `Sequence`
 
-This is the next available sequence number for the inner transaction's account. This only needs to be included in a multi-account `Atomic` transaction. See section 4.1 for an explanation as to why this is needed.
+This is the next available sequence number for the inner transaction's account. This only needs to be included in a multi-account `Batch` transaction. See section 4.1 for an explanation as to why this is needed.
 
-#### 3.1.4. `AtomicIndex`
+#### 3.1.4. `BatchIndex`
 
-This is the (0-indexed) index of the inner transaction within the existing `Atomic` transaction. The first inner transaction will have `AtomicIndex` value `0`, the second will be `1`, etc. Its inclusion ensures there are no hash collisions with other inner transactions within the same `Atomic` transaction, and that the transactions are all placed in the right order.
+This is the (0-indexed) index of the inner transaction within the existing `Batch` transaction. The first inner transaction will have `BatchIndex` value `0`, the second will be `1`, etc. Its inclusion ensures there are no hash collisions with other inner transactions within the same `Batch` transaction, and that the transactions are all placed in the right order.
 
 ## 4. Edge Cases of Transaction Processing
 
@@ -240,31 +240,31 @@ This is the (0-indexed) index of the inner transaction within the existing `Atom
 
 Some objects, such as [offers](https://xrpl.org/docs/references/protocol/ledger-data/ledger-entry-types/offer/#offer-id-format) and [escrows](https://xrpl.org/docs/references/protocol/ledger-data/ledger-entry-types/escrow/#escrow-id-format), use the sequence number of the creation transaction as a part of their ledger entry ID generation, to ensure uniqueness of the IDs.
 
-To get around this, in single-account `Atomic` transactions, a "phantom sequence number" will be used instead. The "phantom sequence number" will be equal to `AtomicTxn.OuterSequence + AtomicTxn.AtomicIndex`.
+To get around this, in single-account `Batch` transactions, a "phantom sequence number" will be used instead. The "phantom sequence number" will be equal to `BatchTxn.OuterSequence + BatchTxn.BatchIndex`.
 
-Multi-account transactions use the same "phantom sequence number" strategy, but instead uses the equation `AtomicTxn.Sequence + AtomicTxn.AtomicIndex`, since the `OuterSequence` does not map to the inner transaction's account.
+Multi-account transactions use the same "phantom sequence number" strategy, but instead uses the equation `BatchTxn.Sequence + BatchTxn.BatchIndex`, since the `OuterSequence` does not map to the inner transaction's account.
 
 ### 4.2. Sequence Number Handling
 
 Section 4.1 describes how sequence numbers are used in inner transactions.
 
-The sequence numbers will always be consumed (i.e. the `AccountRoot`'s `Sequence` will be incremented) if any inner transactions are processed. A transaction counts as being "processed" if it is applied to the ledger, i.e. if a `tec` or `tes` error is received. The sequence number for each account will be incremented by the total number of inner transactions included in the `Atomic` transaction, to avoid any hash collisions.
+The sequence numbers will always be consumed (i.e. the `AccountRoot`'s `Sequence` will be incremented) if any inner transactions are processed. A transaction counts as being "processed" if it is applied to the ledger, i.e. if a `tec` or `tes` error is received. The sequence number for each account will be incremented by the total number of inner transactions included in the `Batch` transaction, to avoid any hash collisions.
 
 ## 5. Security
 
 ### 5.1. Trust Assumptions
 
-Regardless of how many accounts' transactions are included in an `Atomic` transaction, all accounts need to sign the collection of transactions.
+Regardless of how many accounts' transactions are included in a `Batch` transaction, all accounts need to sign the collection of transactions.
 
 #### 5.1.1. Single Account
 In the single account case, this is obvious; the single account must approve all of the transactions it is submitting. No other accounts are involved, so this is a pretty straightforward case.
 
 #### 5.1.2. Multi Account
-The multi-account case is a bit more complicated and is best illustrated with an example. Let's say Alice and Bob are conducting a trustless atomic swap via a multi-account `Atomic`, with Alice providing 1000 XRP and Bob providing 1000 USD. Bob is going to submit the `Atomic` transaction, so Alice must provide her part of the swap to him.
+The multi-account case is a bit more complicated and is best illustrated with an example. Let's say Alice and Bob are conducting a trustless atomic swap via a multi-account `Batch`, with Alice providing 1000 XRP and Bob providing 1000 USD. Bob is going to submit the `Batch` transaction, so Alice must provide her part of the swap to him.
 
 If Alice provides a fully autofilled and signed transaction to Bob, Bob could submit Alice's transaction on the ledger without submitting his and receive the 1000 XRP without losing his 1000 USD. Therefore, the inner transactions must be unsigned. 
 
-If Alice just signs her part of the `Atomic` transaction, Bob could modify his transaction to only provide 1 USD instead, thereby getting his 1000 XRP at a much cheaper rate. Therefore, the entire `Atomic` transaction (and all its inner transactions) must be signed by all parties.
+If Alice just signs her part of the `Batch` transaction, Bob could modify his transaction to only provide 1 USD instead, thereby getting his 1000 XRP at a much cheaper rate. Therefore, the entire `Batch` transaction (and all its inner transactions) must be signed by all parties.
 
 ## 6. Examples
 
@@ -277,12 +277,12 @@ In this example, the user is creating an offer while trading on a DEX UI, and th
 <details open>
 <summary>
 
-The inner transactions are not signed, and the `AtomicSigners` field is not needed on the outer transaction, since there is only one account involved.
+The inner transactions are not signed, and the `BatchSigners` field is not needed on the outer transaction, since there is only one account involved.
 </summary>
 
 ```typescript
 {
-  TransactionType: "Atomic",
+  TransactionType: "Batch",
   Account: "rUserBSM7T3b6nHX3Jjua62wgX9unH8s9b",
   Flags: "1",
   TxnIDs: [
@@ -300,10 +300,10 @@ The inner transactions are not signed, and the `AtomicSigners` field is not need
           issuer: "ruazs5h1qEsqpke88pcqnaseXdm6od2xc",
           value: "2"
         },
-        AtomicTxn: {
+        BatchTxn: {
           Account: "rUserBSM7T3b6nHX3Jjua62wgX9unH8s9b",
           OuterSequence: 3,
-          AtomicIndex: 0
+          BatchIndex: 0
         },
         Sequence: 0,
         Fee: "0",
@@ -317,10 +317,10 @@ The inner transactions are not signed, and the `AtomicSigners` field is not need
         Account: "rUserBSM7T3b6nHX3Jjua62wgX9unH8s9b",
         Destination: "rDEXfrontEnd23E44wKL3S6dj9FaXv",
         Amount: "1000",
-        AtomicTxn: {
+        BatchTxn: {
           Account: "rUserBSM7T3b6nHX3Jjua62wgX9unH8s9b",
           OuterSequence: 3,
-          AtomicIndex: 1
+          BatchIndex: 1
         },
         Sequence: 0,
         Fee: "0",
@@ -349,7 +349,7 @@ Note that the inner transactions are committed as normal transactions, and the `
 ```typescript
 [
   {
-    TransactionType: "Atomic",
+    TransactionType: "Batch",
     Account: "rUserBSM7T3b6nHX3Jjua62wgX9unH8s9b",
     Flags: "1",
     TxnIDs: [
@@ -370,10 +370,10 @@ Note that the inner transactions are committed as normal transactions, and the `
       issuer: "ruazs5h1qEsqpke88pcqnaseXdm6od2xc",
       value: "2"
     },
-    AtomicTxn: {
+    BatchTxn: {
       Account: "rUserBSM7T3b6nHX3Jjua62wgX9unH8s9b",
       OuterSequence: 3,
-      AtomicIndex: 0
+      BatchIndex: 0
     },
     Sequence: 0,
     Fee: "0",
@@ -385,10 +385,10 @@ Note that the inner transactions are committed as normal transactions, and the `
     Account: "rUserBSM7T3b6nHX3Jjua62wgX9unH8s9b",
     Destination: "rDEXfrontEnd23E44wKL3S6dj9FaXv",
     Amount: "1000",
-    AtomicTxn: {
+    BatchTxn: {
       Account: "rUserBSM7T3b6nHX3Jjua62wgX9unH8s9b",
       OuterSequence: 3,
-      AtomicIndex: 1
+      BatchIndex: 1
     },
     Sequence: 0,
     Fee: "0",
@@ -408,12 +408,12 @@ In this example, two users are atomically swapping their tokens, XRP for GKO.
 <details open>
 <summary>
 
-The inner transactions are still not signed, but the `AtomicSigners` field is needed on the outer transaction, since there are two accounts' inner transactions in this `Atomic` transaction.
+The inner transactions are still not signed, but the `BatchSigners` field is needed on the outer transaction, since there are two accounts' inner transactions in this `Batch` transaction.
 </summary>
 
 ```typescript
 {
-  TransactionType: "Atomic",
+  TransactionType: "Batch",
   Account: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
   Flags: "1",
   TxnIDs: [
@@ -427,11 +427,11 @@ The inner transactions are still not signed, but the `AtomicSigners` field is ne
         Account: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
         Destination: "rUser2fDds782Bd6eK15RDnGMtxf7m",
         Amount: "6000000",
-        AtomicTxn: {
+        BatchTxn: {
           Account: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
           OuterSequence: 4,
           Sequence: 4,
-          AtomicIndex: 0
+          BatchIndex: 0
         },
         Sequence: 0,
         Fee: "0",
@@ -449,11 +449,11 @@ The inner transactions are still not signed, but the `AtomicSigners` field is ne
           issuer: "ruazs5h1qEsqpke88pcqnaseXdm6od2xc",
           value: "2"
         },
-        AtomicTxn: {
+        BatchTxn: {
           Account: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
           OuterSequence: 4,
           Sequence: 20,
-          AtomicIndex: 1
+          BatchIndex: 1
         },
         Sequence: 0,
         Fee: "0",
@@ -462,16 +462,16 @@ The inner transactions are still not signed, but the `AtomicSigners` field is ne
       }
     }
   ],
-  AtomicSigners: [
+  BatchSigners: [
     {
-      AtomicSigner: {
+      BatchSigner: {
         Account: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
         SigningPubKey: "03072BBE5F93D4906FC31A690A2C269F2B9A56D60DA9C2C6C0D88FB51B644C6F94",
         Signature: "304502210083DF12FA60E2E743643889195DC42C10F62F0DE0A362330C32BBEC4D3881EECD022010579A01E052C4E587E70E5601D2F3846984DB9B16B9EBA05BAD7B51F912B899"
       }
     },
     {
-      AtomicSigner: {
+      BatchSigner: {
         Account: "rUser2fDds782Bd6eK15RDnGMtxf7m",
         SigningPubKey: "03C6AE25CD44323D52D28D7DE95598E6ABF953EECC9ABF767F13C21D421C034FAB",
         Signature: "304502210083DF12FA60E2E743643889195DC42C10F62F0DE0A362330C32BBEC4D3881EECD022010579A01E052C4E587E70E5601D2F3846984DB9B16B9EBA05BAD7B51F912B899"
@@ -498,23 +498,23 @@ Note that the inner transactions are committed as normal transactions, and the `
 ```typescript
 [
   {
-    TransactionType: "Atomic",
+    TransactionType: "Batch",
     Account: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
     Flags: "1",
     TxnIDs: [
       "A2986564A970E2B206DC8CA22F54BB8D73585527864A4484A5B0C577B6F13C95",
       "0C4316F7E7D909E11BB7DBE0EB897788835519E9950AE8E32F5182468361FE7E"
     ],
-    AtomicSigners: [
+    BatchSigners: [
       {
-        AtomicSigner: {
+        BatchSigner: {
           Account: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
           SigningPubKey: "03072BBE5F93D4906FC31A690A2C269F2B9A56D60DA9C2C6C0D88FB51B644C6F94",
           Signature: "304502210083DF12FA60E2E743643889195DC42C10F62F0DE0A362330C32BBEC4D3881EECD022010579A01E052C4E587E70E5601D2F3846984DB9B16B9EBA05BAD7B51F912B899"
         }
       },
       {
-        AtomicSigner: {
+        BatchSigner: {
           Account: "rUser2fDds782Bd6eK15RDnGMtxf7m",
           SigningPubKey: "03C6AE25CD44323D52D28D7DE95598E6ABF953EECC9ABF767F13C21D421C034FAB",
           Signature: "304502210083DF12FA60E2E743643889195DC42C10F62F0DE0A362330C32BBEC4D3881EECD022010579A01E052C4E587E70E5601D2F3846984DB9B16B9EBA05BAD7B51F912B899"
@@ -531,11 +531,11 @@ Note that the inner transactions are committed as normal transactions, and the `
     Account: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
     Destination: "rUser2fDds782Bd6eK15RDnGMtxf7m",
     Amount: "6000000",
-    AtomicTxn: {
+    BatchTxn: {
       Account: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
       OuterSequence: 4,
       Sequence: 4,
-      AtomicIndex: 0
+      BatchIndex: 0
     },
     Sequence: 0,
     Fee: "0",
@@ -551,11 +551,11 @@ Note that the inner transactions are committed as normal transactions, and the `
       issuer: "ruazs5h1qEsqpke88pcqnaseXdm6od2xc",
       value: "2"
     },
-    AtomicTxn: {
+    BatchTxn: {
       Account: "rUser1fcu9RJa5W1ncAuEgLJF2oJC6",
       OuterSequence: 4,
       Sequence: 20,
-      AtomicIndex: 1
+      BatchIndex: 1
     },
     Sequence: 0,
     Fee: "0",
@@ -570,9 +570,9 @@ Note that the inner transactions are committed as normal transactions, and the `
 
 ## Appendix A: FAQ
 
-### A.1: What if I want a more complex tree of transactions that are AND/XORed together? Can I nest `Atomic` transactions?
+### A.1: What if I want a more complex tree of transactions that are AND/XORed together? Can I nest `Batch` transactions?
 
-The original version of this spec supported nesting `Atomic` transactions. However, upon further analysis, that was deemed a bit too complicated for an initial version of `Atomic`, as most of the benefit from this new feature does not require nested transactions. Based on user and community need, this could be added as part of a V2.
+The original version of this spec supported nesting `Batch` transactions. However, upon further analysis, that was deemed a bit too complicated for an initial version of `Batch`, as most of the benefit from this new feature does not require nested transactions. Based on user and community need, this could be added as part of a V2.
 
 ### A.2: What if all of the transactions fail? Will a fee still be claimed?
 
@@ -586,8 +586,8 @@ This is unnecessary, since that is equivalent to submitting the transactions nor
 
 That is definitely a concern. Ways to mitigate this are still being investigated. Some potential answers:
 * Charge for more extensive path usage
-* Have higher fees for atomic transactions
-* Submit the atomic transactions at the end of the ledger
+* Have higher fees for `Batch` transactions
+* Submit the `Batch` transactions at the end of the ledger
 
 ### A.5: What error is returned if all the transactions fail in an `ONLYONE`/`UNTILFAILURE` transaction?
 
@@ -595,11 +595,11 @@ A general error, `temATOMIC_FAILED`/`tecATOMIC_FAILED`, will be returned. A list
 
 ### A.6: Can another account sign/pay for the outer transaction if they don't have any of the inner transactions?
 
-If there are multiple parties in the inner transactions, yes. Otherwise, no. This is because in a single party `Atomic` transaction, the inner transaction's signoff is provided by the normal transaction signing fields (`SigningPubKey` and `TxnSignature`).
+If there are multiple parties in the inner transactions, yes. Otherwise, no. This is because in a single party `Batch` transaction, the inner transaction's signoff is provided by the normal transaction signing fields (`SigningPubKey` and `TxnSignature`).
 
 ### A.7: How is the `UNTILFAILURE` mode any different than existing behavior with sequence numbers?
 
-Right now, if you submit a series of transactions with consecutive sequence numbers without the use of tickets or `Atomic`, then if one fails in the middle, all subsequent transactions will also fail due to incorrect sequence numbers (since the one that failed would have the next sequence numbers).
+Right now, if you submit a series of transactions with consecutive sequence numbers without the use of tickets or `Batch`, then if one fails in the middle, all subsequent transactions will also fail due to incorrect sequence numbers (since the one that failed would have the next sequence numbers).
 
 The difference between the `UNTILFAILURE` mode and this existing behavior is that right now, the subsequent transactions will only fail with a non-`tec` error code. If the failed transaction receives an error code starting with `tec`, then a fee is claimed and a sequence number is consumed, and the subsequent transactions will still be processed as usual.
 
@@ -607,7 +607,7 @@ The difference between the `UNTILFAILURE` mode and this existing behavior is tha
 
 No, because the inner transactions skip the transaction queue. They are already effectively processed by the queue via the outer transaction. Inner transactions will also be excluded from consensus for the same reason.
 
-### A.9: How does this work in conjunction with [XLS-49d](https://github.com/XRPLF/XRPL-Standards/discussions/144)? If I give a signer list powers over the `Atomic` transaction, can it effectively run all transaction types?
+### A.9: How does this work in conjunction with [XLS-49d](https://github.com/XRPLF/XRPL-Standards/discussions/144)? If I give a signer list powers over the `Batch` transaction, can it effectively run all transaction types?
 
 The answer to this question is still being investigated. Some potential answers:
 * All signer lists should have access to this transaction but only for the transaction types they have powers over
@@ -621,6 +621,6 @@ It has greater capabilities than just batching transactions.
 
 This was deemed unnecessary. If you have a need for this, please provide example use-cases.
 
-### A.12: What if I want the `Atomic` inner transaction accounts to handle their own fees?
+### A.12: What if I want the `Batch` inner transaction accounts to handle their own fees?
 
 That is not supported in this version of the spec, as it is cleaner to just have one account pay the fee. This also allows fee escalation to be calculated on the total cost of the transaction, instead of just on the overhead.
