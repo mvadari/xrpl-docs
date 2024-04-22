@@ -1,6 +1,6 @@
 <pre>
 Title:       <b>Atomic/Batch Transactions</b>
-Revision:    <b>3</b> (2024-04-17)
+Revision:    <b>3</b> (2024-04-22)
 
 Author:      <a href="mailto:mvadari@ripple.com">Mayukha Vadari</a>
 
@@ -234,6 +234,8 @@ This is the (0-indexed) index of the inner transaction within the existing `Batc
 
 ## 4. Edge Cases of Transaction Processing
 
+Inner transactions don't have `Sequence`s or `TicketSequence`s, unlike a normal transaction. This causes some problems when it comes to transaction processing, due to a few edge cases.
+
 ### 4.1. Ledger Object ID Generation
 
 Some objects, such as [offers](https://xrpl.org/docs/references/protocol/ledger-data/ledger-entry-types/offer/#offer-id-format) and [escrows](https://xrpl.org/docs/references/protocol/ledger-data/ledger-entry-types/escrow/#escrow-id-format), use the sequence number of the creation transaction as a part of their ledger entry ID generation, to ensure uniqueness of the IDs.
@@ -247,6 +249,9 @@ Multi-account transactions use the same "phantom sequence number" strategy, but 
 Section 4.1 describes how sequence numbers are used in inner transactions.
 
 The sequence numbers will always be consumed (i.e. the `AccountRoot`'s `Sequence` will be incremented) if any inner transactions are processed. A transaction counts as being "processed" if it is applied to the ledger, i.e. if a `tec` or `tes` error is received. The sequence number for each account will be incremented by the total number of inner transactions included in the `Batch` transaction, to avoid any hash collisions.
+
+In other words,
+$$Sequence_{new} = Sequence_{old} + numInnerTxns$$
 
 ## 5. Security
 
