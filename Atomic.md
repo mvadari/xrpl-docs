@@ -21,7 +21,7 @@ Some use-cases that may be enabled by batch transactions include (but are certai
 * All or nothing: Mint an NFT and create an offer for it in one transaction. If the offer creation fails, the NFT mint is reverted as well.
 * Trying out a few offers: Submit multiple offers with different amounts of slippage, but only one will succeed.
 * Platform fees: Package platform fees within the transaction itself, simplifying the process.
-* Atomic swaps (multi-account): Trustless token/NFT swaps between multiple accounts.
+* Swaps (multi-account): Trustless token/NFT swaps between multiple accounts.
 * Withdrawing accounts (multi-account): Attempt a withdrawal from your checking account, and if that fails, withdraw from your savings account instead.
 
 ## 1. Overview
@@ -360,7 +360,7 @@ Note that the inner transactions are committed as normal transactions, and the `
       "EAE6B33078075A7BA958434691B896CCA4F532D618438DE6DDC7E3FB7A4A0AAB"
     ],
     Sequence: 3,
-    Fee: "0",
+    Fee: "40",
     SigningPubKey: "022D40673B44C82DEE1DDB8B9BB53DCCE4F97B27404DB850F068DD91D685E337EA",
     TxnSignature: "3045022100EC5D367FAE2B461679AD446FBBE7BA260506579AF4ED5EFC3EC25F4DD1885B38022018C2327DB281743B12553C7A6DC0E45B07D3FC6983F261D7BCB474D89A0EC5B8"
   },
@@ -482,7 +482,7 @@ The inner transactions are still not signed, but the `BatchSigners` field is nee
     },
   ],
   Sequence: 4,
-  Fee: "40",
+  Fee: "60",
   SigningPubKey: "03072BBE5F93D4906FC31A690A2C269F2B9A56D60DA9C2C6C0D88FB51B644C6F94",
   TxnSignature: "30440220702ABC11419AD4940969CC32EB4D1BFDBFCA651F064F30D6E1646D74FBFC493902204E5B451B447B0F69904127F04FE71634BD825A8970B9467871DA89EEC4B021F8"
 }
@@ -525,7 +525,7 @@ Note that the inner transactions are committed as normal transactions, and the `
       },
     ],
     Sequence: 4,
-    Fee: "40",
+    Fee: "60",
     SigningPubKey: "03072BBE5F93D4906FC31A690A2C269F2B9A56D60DA9C2C6C0D88FB51B644C6F94",
     TxnSignature: "30440220702ABC11419AD4940969CC32EB4D1BFDBFCA651F064F30D6E1646D74FBFC493902204E5B451B447B0F69904127F04FE71634BD825A8970B9467871DA89EEC4B021F8"
   },
@@ -579,53 +579,49 @@ The original version of this spec supported nesting `Batch` transactions. Howeve
 
 ### A.2: What if all of the transactions fail? Will a fee still be claimed?
 
-Yes, just as they would if they were individually submitted. 
+Yes, just as they would if they were individually submitted.
 
-### A.3: Could there be an additional mode for allowing all transactions to be processed regardless of whether they succeeded?
-
-This is unnecessary, since that is equivalent to submitting the transactions normally.
-
-### A.4: Would this feature enable greater frontrunning abilities?
+### A.3: Would this feature enable greater frontrunning abilities?
 
 That is definitely a concern. Ways to mitigate this are still being investigated. Some potential answers:
 * Charge for more extensive path usage
 * Have higher fees for `Batch` transactions
 * Submit the `Batch` transactions at the end of the ledger
 
-### A.5: What error is returned if all the transactions fail in an `ONLYONE`/`UNTILFAILURE` transaction?
+### A.4: What error is returned if all the transactions fail in an `ONLYONE`/`UNTILFAILURE` transaction?
 
 A general error, `temBATCH_FAILED`/`tecBATCH_FAILED`, will be returned. A list of all the return codes encountered for the transactions that were processed will be included in the metadata, for easier debugging.
 
-### A.6: Can another account sign/pay for the outer transaction if they don't have any of the inner transactions?
+### A.5: Can another account sign/pay for the outer transaction if they don't have any of the inner transactions?
 
 If there are multiple parties in the inner transactions, yes. Otherwise, no. This is because in a single party `Batch` transaction, the inner transaction's signoff is provided by the normal transaction signing fields (`SigningPubKey` and `TxnSignature`).
 
-### A.7: How is the `UNTILFAILURE` mode any different than existing behavior with sequence numbers?
+### A.6: How is the `UNTILFAILURE` mode any different than existing behavior with sequence numbers?
 
 Right now, if you submit a series of transactions with consecutive sequence numbers without the use of tickets or `Batch`, then if one fails in the middle, all subsequent transactions will also fail due to incorrect sequence numbers (since the one that failed would have the next sequence numbers).
 
 The difference between the `UNTILFAILURE` mode and this existing behavior is that right now, the subsequent transactions will only fail with a non-`tec` error code. If the failed transaction receives an error code starting with `tec`, then a fee is claimed and a sequence number is consumed, and the subsequent transactions will still be processed as usual.
 
-### A8: How is the `INDEPENDENT` mode any different than existing behavior with [tickets](https://xrpl.org/docs/concepts/accounts/tickets)?
+### A.7: How is the `INDEPENDENT` mode any different than existing behavior with [tickets](https://xrpl.org/docs/concepts/accounts/tickets)?
 
 Tickets require temporarily having a reserve for all the tickets you want to create, but an `INDEPENDENT` mode `Batch` transaction doesn't, for the low cost of 10 extra drops.
 
 On the flip side, tickets are still needed for other use-cases, such as needing to coordinate multiple signers or needing out-of-order transactions.
 
-### A.9: Is it possible for inner transactions to end up in a different ledger than the outer transaction?
+### A.8: Is it possible for inner transactions to end up in a different ledger than the outer transaction?
 
 No, because the inner transactions skip the transaction queue. They are already effectively processed by the queue via the outer transaction. Inner transactions will also be excluded from consensus for the same reason.
 
-### A.10: How does this work in conjunction with [XLS-49d](https://github.com/XRPLF/XRPL-Standards/discussions/144)? If I give a signer list powers over the `Batch` transaction, can it effectively run all transaction types?
+### A.9: How does this work in conjunction with [XLS-49d](https://github.com/XRPLF/XRPL-Standards/discussions/144)? If I give a signer list powers over the `Batch` transaction, can it effectively run all transaction types?
 
 The answer to this question is still being investigated. Some potential answers:
 * All signer lists should have access to this transaction but only for the transaction types they have powers over
 * Only the global signer list can have access to this transaction
 
-### A.11: What if I want some error code types to be allowed to proceed, just as `tesSUCCESS` would, in e.g. an `ALLORNOTHING` case?
+### A.10: What if I want some error code types to be allowed to proceed, just as `tesSUCCESS` would, in e.g. an `ALLORNOTHING` case?
 
 This was deemed unnecessary. If you have a need for this, please provide example use-cases.
 
-### A.12: What if I want the inner transaction accounts to handle their own fees?
+### A.11: What if I want the inner transaction accounts to handle their own fees?
 
 That is not supported in this version of the spec, as it is cleaner to just have one account pay the fee. This also allows fee escalation to be calculated on the total cost of the transaction, instead of just on the overhead.
