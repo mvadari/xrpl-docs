@@ -109,9 +109,11 @@ This is an array of `Credentials` objects. The maximum length of this array is 1
 
 This is an array of `Issue` objects, which represent issued currencies on the XRPL. The maximum length of this array is 10.
 
+XRP is automatically included, and therefore will not be included in this array.
+
 | Field Name | Required? | JSON Type | Internal Type | Description |
 |------------|-----------|-----------|---------------|-------------|
-|`Token`|✔️|`"XRP"` or `object`|`Issue`|The token.|
+|`Token`|✔️|`object`|`Issue`|The token.|
 
 ## 3. Transaction: `DEXDomainSet`
 
@@ -132,6 +134,7 @@ This transaction creates or modifies a `DEXDomain` object.
 * `Issuer` doesn't exist on one or more of the credentials in `AcceptedCredentials`.
 * The resulting `DEXDomain` object doesn't have any accepted credentials or tokens.
 * The `AcceptedTokens` or `AcceptedCredentials` arrays are too long.
+* XRP is included in the `AcceptedTokens` array.
 * If `DomainID` is included:
 	* That domain doesn't exist.
 	* The account isn't the domain owner.
