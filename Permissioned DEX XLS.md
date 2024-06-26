@@ -12,11 +12,20 @@ Affiliation: <a href="https://ripple.com">Ripple</a>
 
 ## Abstract
 
-(copied from PRD)
+(copied + rewritten from PRD)
 
-Decentralized Exchanges (DEXes) offer significant benefits including intermediary elimination, lower transaction costs, enhanced security, and user asset custody, aligning with demands for efficient financial systems. However, the crypto adoption surge by financial institutions faces challenges with DEXes' anonymous nature, complicating AML and KYC compliance.
+Decentralized Exchanges (DEXes) are revolutionizing finance due to their ability to offer significant benefits such as intermediary elimination, lower transaction costs, enhanced security, and user asset custody. These advantages align perfectly with the growing demand for efficient financial systems. However, a major hurdle hinders wider adoption by traditional institutions: the anonymity of a DEX makes it difficult to comply with Anti-Money Laundering (AML) and Know Your Customer (KYC) regulations.
 
-There's a critical need for an innovative permissioning system that allows compliant institutional trading on DEXs, blending blockchain's decentralized benefits with traditional finance's regulatory standards.
+This challenge highlights a critical need for the development of a permissioned system within DEXes. Such a system would allow institutions to adhere to regulations while still benefiting from the core advantages of blockchain technology.
+
+There are three main approaches for implementing permissioning on a DEX:
+* Chain-Level Permissioning: Creating private blockchains specifically for institutions. However, this approach also reduces liquidity and hinders competition with established Centralized Exchanges (CEXs).
+* Token-Level Permissioning: The [Authorized Trustlines](https://xrpl.org/docs/concepts/tokens/fungible-tokens/authorized-trust-lines/) feature allows token issuers , offer built-in permissioning features. However, this approach also has liquidity limitations due to requiring a separate, permissioned token.
+* **DEX-Level Permissioning**: This approach focuses on implementing permissioning systems directly within the DEX itself. This strategy offers the **most promising balance** between achieving compliance, maintaining scalability, and preserving liquidity.
+
+This proposal puts forward a permissioned DEX system for the XRPL. It allows regulated financial institutions to adhere to their compliance laws, without creating walled gardens of liquidity and allowing easy arbitrage. Different jurisdictions may also 
+
+This proposal introduces a permissioned DEX system for the XRPL. By integrating permissioning features directly within the DEX protocol, regulated financial institutions gain the ability to participate in the XRPL's DEX while still adhering to their compliance requirements. This approach avoids the drawbacks of isolated, permissioned tokens or private blockchains, ensuring a vibrant and liquid marketplace that facilitates seamless arbitrage opportunities. Ultimately, this permissioned DEX system paves the way for wider institutional adoption of XRPL, fostering a more inclusive and efficient financial landscape.
 
 ## 1. Overview
 
@@ -32,16 +41,15 @@ We propose:
 
 This feature will require an amendment, tentatively titled `featurePermissionedDEX`.
 
-[Explain the general idea better here]
-
 ### 1.1. Terminology
 
 * **Offer Crossing**: Two offers **cross** if one is selling a token at a price that's actually lower than the price the other is offering to sell it at.
 * **Offer Filling**: Two offers **fill** each other if the trade executes and the sale goes through. Offers can be partially filled, based on the flags (settings) of the offers.
 * **Domain**: A collection of rules indicating what accounts and trades may be a part of it. This spec includes credential-gating and token-gating, but more options could be added in the future.
 * **Domain Rules**: The set of rules that govern a domain, i.e. the credentials and tokens it accepts.
+* **Domain Owner**: The account that created a domain, and is the only one that can modify its rules or delete it.
 * **Domain Member**: An account that satisfies the rules of the domain (i.e. has one of the credentials that are accepted by the domain). There is no explicit joining step; as long as the account has a valid credential, it is a member.
-* **Permissioned DEX**: The subset of the DEX that operates within a specific domain.
+* **Permissioned DEX**: The subset of the DEX that operates within the rules of a specific domain.
 * **Open DEX**: The unpermissioned DEX that has no restrictions.
 * **Permissioned Offer/Payment**: An offer/cross-currency payment that can only be filled by offers that are a part of a specific domain.
 * **Open Offer/Payment** or **Unpermissioned Offer/Payment**: An offer/cross-currency payment that is able to trade on the open DEX or potentially in permissioned DEXes, but doesn't have any restrictions itself.
