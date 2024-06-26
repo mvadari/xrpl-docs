@@ -136,7 +136,7 @@ This transaction creates or modifies a `DEXDomain` object.
 * The `AcceptedTokens` or `AcceptedCredentials` arrays are too long.
 * If `DomainID` is included:
 	* That domain doesn't exist.
-	* The account isn't the owner of that domain.
+	* The account isn't the domain owner.
 
 ### 3.3. State Changes
 
@@ -212,7 +212,6 @@ The same will be true if the credential that allows the offer's owner to be a me
 
 The `OfferCreate` transaction creates an offer on the CLOB DEX. This transaction type already exists on the XRPL, but is being extended as a part of this spec to also support permissioned DEX domains.
 
-
 ### 6.1. Fields
 
 <details>
@@ -241,19 +240,19 @@ The existing set of failure conditions for `OfferCreate` will continue to exist.
 
 There will also be the following in addition, if the `DomainID` field is included:
 * The domain doesn't exist.
-* The account is not a domain member.
+* The account is not a member of the domain.
 
 ### 6.3. State Changes
 
 The existing set of state changes for `OfferCreate` will continue to exist.
 
 If the `DomainID` is included in the `OfferCreate` transaction, whenever an offer is crossed:
-* If the offer doesn't include a `DomainID`, the offer's account will be checked to see if it has any of the domain's credentials. If it does, it will fill that offer as per the rules of the `OfferCreate`'s parameters. If it doesn't, the offer will be skipped.
-* If the offer does include a `DomainID`, it must match the `DomainID` in the transaction.
+* If the offer doesn't include a `DomainID`, the offer's account will be checked to see if it is a valid domain offer. If it does, it will fill that offer as per the rules of the `OfferCreate`'s parameters. If it doesn't, the offer will be skipped.
+* If the offer does include a `DomainID`, it must match the `DomainID` in the transaction (even if each would be a valid domain offer in the other domain).
 * If there is an offer placed on the ledger, it will include the `DomainID`.
 
 If the `DomainID` is included in the `OfferCreate` transaction, whenever an offer with a `DomainID` is crossed:
-* The transaction sender's account will be checked to see if it has any of the domain's credentials. If it does, it will fill that offer as per the rules of the `OfferCreate`'s parameters. If it doesn't, the offer will be skipped.
+* The offer outlined in the `OfferCreate` transaction will be checked to see if it is a valid domain offer. If it does, it will fill that offer as per the rules of the `OfferCreate`'s parameters. If it doesn't, the offer will be skipped.
 
 ## 7. Transaction: `Payment`
 
