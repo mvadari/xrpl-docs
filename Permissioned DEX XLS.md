@@ -23,8 +23,6 @@ There are three main approaches for implementing permissioning on a DEX:
 * Token-Level Permissioning: The [Authorized Trustlines](https://xrpl.org/docs/concepts/tokens/fungible-tokens/authorized-trust-lines/) feature allows token issuers , offer built-in permissioning features. However, this approach also has liquidity limitations due to requiring a separate, permissioned token.
 * **DEX-Level Permissioning**: This approach focuses on implementing permissioning systems directly within the DEX itself. This strategy offers the **most promising balance** between achieving compliance, maintaining scalability, and preserving liquidity.
 
-This proposal puts forward a permissioned DEX system for the XRPL. It allows regulated financial institutions to adhere to their compliance laws, without creating walled gardens of liquidity and allowing easy arbitrage. Different jurisdictions may also 
-
 This proposal introduces a permissioned DEX system for the XRPL. By integrating permissioning features directly within the DEX protocol, regulated financial institutions gain the ability to participate in the XRPL's DEX while still adhering to their compliance requirements. This approach avoids the drawbacks of isolated, permissioned tokens or private blockchains, ensuring a vibrant and liquid marketplace that facilitates seamless arbitrage opportunities. Ultimately, this permissioned DEX system paves the way for wider institutional adoption of XRPL, fostering a more inclusive and efficient financial landscape.
 
 ## 1. Overview
