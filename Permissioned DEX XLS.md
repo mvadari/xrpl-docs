@@ -238,18 +238,18 @@ The existing set of failure conditions for `OfferCreate` will continue to exist.
 
 There will also be the following in addition, if the `DomainID` field is included:
 * The domain doesn't exist.
-* The account is not a member of the domain.
+* The offer is not a valid domain offer.
 
 ### 6.3. State Changes
 
 The existing set of state changes for `OfferCreate` will continue to exist.
 
 If the `DomainID` is included in the `OfferCreate` transaction, whenever an offer is crossed:
-* If the offer doesn't include a `DomainID`, the offer's account will be checked to see if it is a valid domain offer. If it does, it will fill that offer as per the rules of the `OfferCreate`'s parameters. If it doesn't, the offer will be skipped.
-* If the offer does include a `DomainID`, it must match the `DomainID` in the transaction (even if each would be a valid domain offer in the other domain).
+* If the crossed offer doesn't include a `DomainID`, the offer will be checked to see if it is a valid domain offer. If it does, it will fill that offer as per the rules of the `OfferCreate`'s parameters. If it doesn't, the offer will be skipped.
+* If the crossed offer does include a `DomainID`, it must match the `DomainID` in the transaction (even if each would be a valid domain offer in the other domain).
 * If there is an offer placed on the ledger, it will include the `DomainID`.
 
-If the `DomainID` is included in the `OfferCreate` transaction, whenever an offer with a `DomainID` is crossed:
+If the `DomainID` is not included in the `OfferCreate` transaction, whenever an offer with a `DomainID` is crossed:
 * The offer outlined in the `OfferCreate` transaction will be checked to see if it is a valid domain offer. If it does, it will fill that offer as per the rules of the `OfferCreate`'s parameters. If it doesn't, the offer will be skipped.
 
 ## 7. Transaction: `Payment`
@@ -293,6 +293,8 @@ There will also be the following in addition, if the `DomainID` is included:
 * The payment isn't a cross-currency or partial payment.
 * The domain doesn't exist.
 * The transaction account is not a valid member of the domain.
+* The source and/or destination tokens are not permitted as a part of the domain's rules.
+* The paths do not satisfy the domain's rules.
 
 ### 7.3. State Changes
 
