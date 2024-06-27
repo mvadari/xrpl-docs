@@ -394,6 +394,8 @@ Edit this to support specific domain objects.
 
 ## n+1. Open Questions
 
+* Should an account that has DepositAuth enabled be forced to use domains? i.e. the `OfferCreate` will fail if they don't have a `DomainID`. Or is it more of an "at your own risk" situation?
+
 # Appendix
 
 ## Appendix A: FAQ
@@ -410,5 +412,6 @@ Performance tests will need to be conducted once the implementation is done. The
 
 The term `Domain` is already used in the [account settings](https://xrpl.org/docs/references/protocol/transactions/types/accountset/#domain), so it would be confusing to use just the term `Domain` for this.
 
-<!--
 ## Appendix B: Alternate Designs
+
+
