@@ -75,7 +75,7 @@ A permissioned offer will only be filled by valid domain offers.
 
 An open offer can be filled by any offer on the open DEX, but can _also_ be filled by any permissioned offer, if the open offer is a valid domain offer.
 
-The fact that traders don't need to place a permissioned offer in order to fill offers in that domain enables arbitrage and mixing of liquidity much more easily, as traders do not have to place multiple offers in multiple domains.
+The fact that traders don't need to place a permissioned offer in order to fill offers in that domain enables arbitrage and mixing of liquidity much more easily, as traders do not have to place multiple offers in multiple domains. It also prevents the creation of walled gardens of liquidity.
 
 ## 2. On-Ledger Object: `PermissionedDomain`
 
