@@ -340,18 +340,16 @@ Edit this to support specific domain objects.
 -->
 
 <!--
-## 5. Examples
+## 10. Examples
 
-## 6. Invariants
+## 11. Invariants
 
 * You cannot have a domain with no rules.
 
-## 7. Security
+## 12. Security
 -->
 
 ## n+1. Open Questions
-* Do you need a separate set of offer directories, or can this piggy-back on the existing ones?
-	* Could be done by having a separate set of offer directories that have a `DomainID` field (existing design just adds the `DomainID` field to the offer itself)
 
 # Appendix
 
@@ -359,7 +357,7 @@ Edit this to support specific domain objects.
 
 ### A.1: How are AMMs handled?
 
-AMMs are not explicitly supported in this proposal. They can participate in domains that are only token-gated (assuming the AMM's tokens are both part of the approved list), but not those that are credential-gated (since they cannot receive credentials). They could be supported in a future proposal.
+AMMs are not explicitly supported within permissioned DEXes in this proposal. They can participate in domains that are only token-gated (assuming the AMM's tokens are both part of the approved list), but not those that are credential-gated (since they cannot receive credentials). They could be added to permissioned DEXes in a future proposal.
 
 <!--
 ## Appendix B: Alternate Designs
