@@ -115,6 +115,10 @@ XRP is automatically included, and therefore will not be included in this array.
 |------------|-----------|-----------|---------------|-------------|
 |`Token`|✔️|`object`|`Issue`|The token.|
 
+### 2.2. Account Deletion
+
+The `PermissionedDomain` object is not a [deletion blocker](https://xrpl.org/docs/concepts/accounts/deleting-accounts/#requirements).
+
 ## 3. Transaction: `PermissionedDomainSet`
 
 This transaction creates or modifies a `PermissionedDomain` object.
@@ -295,8 +299,8 @@ The existing set of failure conditions for `Payment` will continue to exist.
 There will also be the following in addition, if the `DomainID` is included:
 * The payment isn't a cross-currency or partial payment.
 * The domain doesn't exist.
-* The transaction account is not a valid member of the domain.
-* The source and/or destination tokens are not permitted as a part of the domain's rules.
+* The `Account` is not a domain member.
+* The currencies used in `Amount`, `SendMax`, and `DeliverMin` are not permitted as a part of the domain's rules.
 * The paths do not satisfy the domain's rules.
 
 ### 7.3. State Changes
@@ -398,6 +402,7 @@ TODO: add example transactions for the example flows laid out in 1.2
 
 * Should an account that has DepositAuth enabled be forced to use domains? i.e. the `OfferCreate` will fail if they don't have a `DomainID`. Or is it more of an "at your own risk" situation?
 * Can an offer be part of multiple domains?
+* Should there be a flag on a domain to make it immutable and/or undeleteable?
 
 # Appendix
 
@@ -415,6 +420,10 @@ Performance tests will need to be conducted once the implementation is done. The
 
 The term `Domain` is already used in the [account settings](https://xrpl.org/docs/references/protocol/transactions/types/accountset/#domain), so it would be confusing to use just the term `Domain` for this.
 
+### A.4: Why do you need a domain? Why not just indicate what credentials you accept on the offer itself?
+
+
+
 ## Appendix B: Alternate Designs
 
-
+Maybe mention the platonic ideal design here
