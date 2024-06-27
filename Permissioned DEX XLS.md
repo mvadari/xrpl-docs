@@ -305,23 +305,42 @@ The existing set of state changes for `Payment` will continue to exist.
 
 ## 8. RPC: `book_offers`
 
-Edit this to support specific domain objects.
+The [`book_offers` RPC method](https://xrpl.org/book_offers.html) already exists on the XRPL. This proposal suggests some modifications to also support permissioned DEX domains.
 
-<!--
 ### 8.1. Request Fields
 
-| Field Name | Required? | JSON Type | Description|
-|-------|---------|---------|---------|
-|`account`|✔️|`string`|The account.|
+As a reference, here are the fields that `book_offers` currently accepts:
+
+| Field Name | Required? | JSON Type | Description |
+|------------|-----------|-----------|-------------|
+|`taker_gets`|✔️|`object`|The asset the account taking the Offer would receive, as a currency without an amount.|
+|`taker_pays`|✔️|`object`|The asset the account taking the Offer would pay, as a currency without an amount.|
+|`ledger_hash`| |`string`|A 20-byte hex string for the ledger version to use.|
+|`ledger_index`| |`number` or `string`|The ledger index of the ledger to use, or a shortcut string to choose a ledger automatically.|
+|`limit`| |`number`|The maximum number of Offers to return. The response may include fewer results.|
+|`taker`| |`string`|The address of an account to use as a perspective. The response includes this account's offers even if they are unfunded. (You can use this to see what offers are above or below yours in the order book.)|
+
+This proposal puts forward the following addition:
+
+| Field Name | Required? | JSON Type | Description |
+|------------|-----------|-----------|-------------|
+|`domain`| |`string`|The object ID of a `PermissionedDomain` object. If this field is included, then the offers will be filtered to only show the valid domain offers for that domain.|
 
 ### 8.2. Response Fields
 
-| Field Name | Required? | JSON Type | Description|
-|-------|---------|---------|---------|
-|`account`|✔️|`string`|The account.|
--->
+This proposal does not suggest any changes to the response fields. As a reference, here are the fields that `book_offers` currently returns:
 
-## 9. RPC: `path_find`/`ripple_path_find`
+| Field Name | Always Present? | JSON Type | Description |
+|------------|-----------------|-----------|-------------|
+|`ledger_current_index`| |`number` or `string`|The ledger index of the current in-progress ledger version, which was used to retrieve this information.|
+|`ledger_index`| |`number` or `string`|The ledger index of the ledger version that was used when retrieving this data, as requested.|
+|`ledger_hash`| |`string`|The identifying hash of the ledger version that was used when retrieving this data, as requested.|
+|`offers`|✔️|`array`|Array of offer objects, each of which has the fields of an Offer object.|
+
+
+## 9. RPC: `path_find`
+
+The [`path_find` RPC method](https://xrpl.org/path_find.html) already exists on the XRPL. This proposal suggests some modifications to also support permissioned DEX domains.
 
 Edit this to support specific domain objects.
 
@@ -339,14 +358,38 @@ Edit this to support specific domain objects.
 |`account`|✔️|`string`|The account.|
 -->
 
-<!--
-## 10. Examples
+## 10. RPC: `ripple_path_find`
 
-## 11. Invariants
+The [`ripple_path_find` RPC method](https://xrpl.org/ripple_path_find.html) already exists on the XRPL. This proposal suggests some modifications to also support permissioned DEX domains.
+
+Edit this to support specific domain objects.
+
+<!--
+### 10.1. Request Fields
+
+| Field Name | Required? | JSON Type | Description|
+|-------|---------|---------|---------|
+|`account`|✔️|`string`|The account.|
+
+### 10.2. Response Fields
+
+| Field Name | Required? | JSON Type | Description|
+|-------|---------|---------|---------|
+|`account`|✔️|`string`|The account.|
+-->
+
+<!--
+## 11. Examples
+
+## 12. Invariants
 
 * You cannot have a domain with no rules.
 
-## 12. Security
+## 13. Security
+
+* You have to trust the issuers of the credentials.
+* 
+
 -->
 
 ## n+1. Open Questions
