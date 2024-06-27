@@ -30,9 +30,9 @@ This proposal introduces a permissioned DEX system for the XRPL. By integrating 
 This proposal builds on top of [XLS-70d](https://github.com/XRPLF/XRPL-Standards/discussions/202), as credentials are needed for permissioning.
 
 We propose:
-* Creating a `DEXDomain` ledger object.
-* Creating a `DEXDomainSet` transaction.
-* Creating a `DEXDomainDelete` transaction.
+* Creating a `PermissionedDomain` ledger object.
+* Creating a `PermissionedDomainSet` transaction.
+* Creating a `PermissionedDomainDelete` transaction.
 * Modifying the `Offer` ledger object.
 * Modifying the `OfferCreate` transaction.
 * Modifying the `Payment` transaction.
@@ -77,7 +77,7 @@ An open offer can be filled by any offer on the open DEX, but can _also_ be fill
 
 The fact that traders don't need to place a permissioned offer in order to fill offers in that domain enables arbitrage and mixing of liquidity much more easily, as traders do not have to place multiple offers in multiple domains.
 
-## 2. On-Ledger Object: `DEXDomain`
+## 2. On-Ledger Object: `PermissionedDomain`
 
 This object represents a DEX domain.
 
@@ -86,7 +86,7 @@ This object represents a DEX domain.
 | Field Name | Required? | JSON Type | Internal Type | Description |
 |------------|-----------|-----------|---------------|-------------|
 |`LedgerIndex`| ✔️|`string`|`Hash256`|The unique ID of the ledger object.|
-|`LedgerEntryType`| ✔️|`string`|`UInt16`|The ledger object's type (`DEXDomain`).|
+|`LedgerEntryType`| ✔️|`string`|`UInt16`|The ledger object's type (`PermissionedDomain`).|
 |`Owner`| ✔️|`string`|`AccountID`|The account that controls the settings of the domain.|
 |`Sequence`|✔️|`number`|`UInt32`|The `Sequence` value of the `OfferCreate` transaction that created this offer. Used in combination with the `Account` to identify this offer.|
 |`AcceptedCredentials`| |`array`|`STArray`|The credentials that are accepted by the domain. Ownership of one of these credentials automatically makes you a member of the domain.|
@@ -94,7 +94,7 @@ This object represents a DEX domain.
 
 #### 2.1.1. `LedgerIndex`
 
-The ID of this object will be a hash that incorporates the `Owner` and `Sequence` fields, combined with a unique space key for `DEXDomain` objects, which will be defined during implementation.
+The ID of this object will be a hash that incorporates the `Owner` and `Sequence` fields, combined with a unique space key for `PermissionedDomain` objects, which will be defined during implementation.
 
 #### 2.1.2. `AcceptedCredentials`
 
@@ -115,15 +115,15 @@ XRP is automatically included, and therefore will not be included in this array.
 |------------|-----------|-----------|---------------|-------------|
 |`Token`|✔️|`object`|`Issue`|The token.|
 
-## 3. Transaction: `DEXDomainSet`
+## 3. Transaction: `PermissionedDomainSet`
 
-This transaction creates or modifies a `DEXDomain` object.
+This transaction creates or modifies a `PermissionedDomain` object.
 
 ### 3.1. Fields
 
 | Field Name | Required? | JSON Type | Internal Type | Description |
 |------------|-----------|-----------|---------------|-------------|
-|`TransactionType`| ✔️|`string`|`UInt16`|The transaction type (`DEXDomainSet`).|
+|`TransactionType`| ✔️|`string`|`UInt16`|The transaction type (`PermissionedDomainSet`).|
 |`Account`| ✔️|`string`|`AccountID`|The account sending the transaction.|
 |`DomainID`| |`string`|`Hash256`|The domain to modify. Must be included if modifying an existing domain.|
 |`AcceptedCredentials`| |`array`|`STArray`|The credentials that are accepted by the domain. Ownership of one of these credentials automatically makes you a member of the domain. An empty array means deleting the field.|
@@ -132,7 +132,7 @@ This transaction creates or modifies a `DEXDomain` object.
 ### 3.2. Failure Conditions
 
 * `Issuer` doesn't exist on one or more of the credentials in `AcceptedCredentials`.
-* The resulting `DEXDomain` object doesn't have any accepted credentials or tokens.
+* The resulting `PermissionedDomain` object doesn't have any accepted credentials or tokens.
 * The `AcceptedTokens` or `AcceptedCredentials` arrays are too long.
 * XRP is included in the `AcceptedTokens` array.
 * If `DomainID` is included:
@@ -141,17 +141,17 @@ This transaction creates or modifies a `DEXDomain` object.
 
 ### 3.3. State Changes
 
-* Creates or modifies a `DEXDomain` object.
+* Creates or modifies a `PermissionedDomain` object.
 
-## 4. Transaction: `DEXDomainDelete`
+## 4. Transaction: `PermissionedDomainDelete`
 
-This transaction deletes a `DEXDomain` object.
+This transaction deletes a `PermissionedDomain` object.
 
 ### 4.1. Fields
 
 | Field Name | Required? | JSON Type | Internal Type | Description |
 |------------|-----------|-----------|---------------|-------------|
-|`TransactionType`| ✔️|`string`|`UInt16`|The transaction type (`DEXDomainDelete`).|
+|`TransactionType`| ✔️|`string`|`UInt16`|The transaction type (`PermissionedDomainDelete`).|
 |`Account`| ✔️|`string`|`AccountID`|The account sending the transaction.|
 |`DomainID`| |`string`|`Hash256`|The domain to delete.|
 
@@ -162,7 +162,7 @@ This transaction deletes a `DEXDomain` object.
 
 ### 4.3. State Changes
 
-* Deletes a `DEXDomain` object.
+* Deletes a `PermissionedDomain` object.
 
 ## 5. On-Ledger Object: `Offer`
 
@@ -358,6 +358,14 @@ Edit this to support specific domain objects.
 ### A.1: How are AMMs handled?
 
 AMMs are not explicitly supported within permissioned DEXes in this proposal. They can participate in domains that are only token-gated (assuming the AMM's tokens are both part of the approved list), but not those that are credential-gated (since they cannot receive credentials). They could be added to permissioned DEXes in a future proposal.
+
+### A.2: How will performance/TPS be affected from all these additional checks?
+
+Performance tests will need to be conducted once the implementation is done. The spec may be modified if such tests show serious performance reduction.
+
+### A.3: Why is the name `PermissionedDomain` so long? Why not shorten it to just `Domain`?
+
+The term `Domain` is already used in the [account settings](https://xrpl.org/docs/references/protocol/transactions/types/accountset/#domain), so it would be confusing to use just the term `Domain` for this.
 
 <!--
 ## Appendix B: Alternate Designs
