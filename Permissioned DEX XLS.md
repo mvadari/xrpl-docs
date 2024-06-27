@@ -378,23 +378,26 @@ Edit this to support specific domain objects.
 |`account`|✔️|`string`|The account.|
 -->
 
-<!--
 ## 11. Examples
+
+TODO: add example transactions for the example flows laid out in 1.2
 
 ## 12. Invariants
 
 * You cannot have a domain with no rules.
+* No offer with a `DomainID` field will be filled by an invalid domain offer.
+	* NOTE: This can't be done in the standard `InvariantChecks`, but could theoretically be embedded in the payment engine somewhere.
 
 ## 13. Security
 
 * You have to trust the issuers of the credentials.
-* 
-
--->
+* You have to trust the domain creator. You can be your own domain creator, though.
+* Potential performance concerns
 
 ## n+1. Open Questions
 
 * Should an account that has DepositAuth enabled be forced to use domains? i.e. the `OfferCreate` will fail if they don't have a `DomainID`. Or is it more of an "at your own risk" situation?
+* Can an offer be part of multiple domains?
 
 # Appendix
 
