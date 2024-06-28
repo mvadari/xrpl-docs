@@ -18,11 +18,6 @@ Decentralized Exchanges (DEXes) are revolutionizing finance due to their ability
 
 This challenge highlights a critical need for the development of a permissioned system within DEXes. Such a system would allow institutions to adhere to regulations while still benefiting from the core advantages of blockchain technology.
 
-There are three main approaches for implementing permissioning on a DEX:
-* Chain-Level Permissioning: Creating private blockchains specifically for institutions. However, this approach also reduces liquidity and hinders competition with established Centralized Exchanges (CEXs).
-* Token-Level Permissioning: The [Authorized Trustlines](https://xrpl.org/docs/concepts/tokens/fungible-tokens/authorized-trust-lines/) feature allows token issuers , offer built-in permissioning features. However, this approach also has liquidity limitations due to requiring a separate, permissioned token.
-* **DEX-Level Permissioning**: This approach focuses on implementing permissioning systems directly within the DEX itself. This strategy offers the **most promising balance** between achieving compliance, maintaining scalability, and preserving liquidity.
-
 This proposal introduces a permissioned DEX system for the XRPL. By integrating permissioning features directly within the DEX protocol, regulated financial institutions gain the ability to participate in the XRPL's DEX while still adhering to their compliance requirements. This approach avoids the drawbacks of isolated, permissioned tokens or private blockchains, ensuring a vibrant and liquid marketplace that facilitates seamless arbitrage opportunities. Ultimately, this permissioned DEX system paves the way for wider institutional adoption of XRPL, fostering a more inclusive and efficient financial landscape.
 
 ## 1. Overview
@@ -39,7 +34,16 @@ We propose:
 
 This feature will require an amendment, tentatively titled `featurePermissionedDEX`.
 
-### 1.1. Terminology
+### 1.1. Background: The Current State of Permissioning and Compliance on the XRPL
+
+* Deposit Auth
+* Authorized Trustlines
+* Clawback
+* Freezing
+* Multisign
+* Why all this isn't enough for DEX activity
+
+### 1.2. Terminology
 
 * **Offer Crossing**: Two offers **cross** if one is selling a token at a price that's actually lower than the price the other is offering to sell it at.
 * **Offer Filling**: Two offers **fill** each other if the trade executes and the sale goes through. Offers can be partially filled, based on the flags (settings) of the offers.
@@ -53,23 +57,23 @@ This feature will require an amendment, tentatively titled `featurePermissionedD
 * **Open Offer/Payment** or **Unpermissioned Offer/Payment**: An offer/cross-currency payment that is able to trade on the open DEX or potentially in permissioned DEXes, but doesn't have any restrictions itself.
 * **Valid Domain Offer/Payment**: An offer/cross-currency payment that satisfies the rules of a domain (i.e. the account is a domain member, and the tokens in the offer are accepted). This can be a permissioned _or_ open offer.
 
-### 1.2. Basic Flow
+### 1.3. Basic Flow
 
-#### 1.2.1. Initial setup
+#### 1.3.1. Initial setup
 * Owen, a domain owner, creates his domain with a set of KYC credentials and allowed tokens (including a certain USD and EUR).
 * Tracy, a trader, is operating in Owen's regulatory environment and has strict regulatory requirements - she cannot receive liquidity from non-KYCed accounts. She has one of Owen's accepted KYC credentials, and will only be placing permissioned offers.
 * Marko, a market maker, wants to arbitrage offers in Owen's domain, as there is often a significant price difference inside and outside. He obtains one of the KYC credentials that Owen's domain accepts. However, he will not be placing permissioned offers, only open offers, to access as much liquidity as possible.
 
-#### 1.2.2. Trading Scenario 1
+#### 1.3.2. Trading Scenario 1
 
 * Tracy places a permissioned offer on the XRP-USD orderbook. There are no other offers on that orderbook that are a part of the domain.
 * Marko notices that there is a significant price difference between Tracy's offer and the rest of the orderbook. He now submits an open offer to cross and fill Tracy's offer.
 
-#### 1.2.3. Trading Scenario 2
+#### 1.3.3. Trading Scenario 2
 * Marko has placed open offers on the XRP-EUR orderbook.
 * Tracy places an offer on the XRP-EUR orderbook that crosses one of Marko's offers. Her offer is filled by his.
 
-### 1.3. How Domains Work
+### 1.4. How Domains Work
 
 A permissioned offer will only be filled by valid domain offers.
 
@@ -384,7 +388,7 @@ Edit this to support specific domain objects.
 
 ## 11. Examples
 
-TODO: add example transactions for the example flows laid out in 1.2
+TODO: add example transactions for the example flows laid out in 1.3
 
 ## 12. Invariants
 
@@ -403,6 +407,9 @@ TODO: add example transactions for the example flows laid out in 1.2
 * Should an account that has DepositAuth enabled be forced to use domains? i.e. the `OfferCreate` will fail if they don't have a `DomainID`. Or is it more of an "at your own risk" situation?
 * Can an offer be part of multiple domains?
 * Should there be a flag on a domain to make it immutable and/or undeleteable?
+* Does the domain owner need to have trustlines for the tokens/hold the credentials?
+* Does the domain owner need to be able to freeze/clawback tokens (from the PRD) or delete credentials?
+	* If so, how? There's no real "domain membership" - if you hold one of the domain credentials you're a "domain member" - so it doesn't seem fair that a domain owner can freeze/clawback your tokens.
 
 # Appendix
 
@@ -422,7 +429,9 @@ The term `Domain` is already used in the [account settings](https://xrpl.org/doc
 
 ### A.4: Why do you need a domain? Why not just indicate what credentials you accept on the offer itself?
 
+### A.5: Can a domain owner also be a credential issuer or token issuer?
 
+Yes.
 
 ## Appendix B: Alternate Designs
 
