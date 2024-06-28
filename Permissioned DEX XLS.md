@@ -41,7 +41,7 @@ This feature will require an amendment, tentatively titled `featurePermissionedD
 * Clawback
 * Freezing
 * Multisign
-* Why all this isn't enough for DEX activity
+* Why all this isn't enough - DEX activity
 
 ### 1.2. Terminology
 
@@ -142,7 +142,7 @@ This transaction creates or modifies a `PermissionedDomain` object.
 * `Issuer` doesn't exist on one or more of the credentials in `AcceptedCredentials`.
 * The resulting `PermissionedDomain` object doesn't have any accepted credentials or tokens.
 * The `AcceptedTokens` or `AcceptedCredentials` arrays are too long.
-* XRP is included in the `AcceptedTokens` array.
+* XRP is included in the `AcceptedTokens` array (since it's included by default).
 * If `DomainID` is included:
 	* That domain doesn't exist.
 	* The account isn't the domain owner.
@@ -350,41 +350,64 @@ This proposal does not suggest any changes to the response fields. As a referenc
 
 The [`path_find` RPC method](https://xrpl.org/path_find.html) already exists on the XRPL. This proposal suggests some modifications to also support permissioned DEX domains.
 
-Edit this to support specific domain objects.
+Only the `create` subcommand will be affected.
 
-<!--
 ### 9.1. Request Fields
 
-| Field Name | Required? | JSON Type | Description|
-|-------|---------|---------|---------|
-|`account`|✔️|`string`|The account.|
+| Field Name | Required? | JSON Type | Description |
+|------------|-----------|-----------|-------------|
+|`subcommand`|✔️|`string`|Use `"create"` to send the create sub-command|
+|`source_account`|✔️|`string`|The address of the account to find a path from. (In other words, the account that would be sending a payment.)|
+|`destination_account`|✔️|`string`|The address of the account to find a path to. (In other words, the account that would receive a payment.)|
+|`destination_amount` |✔️|`string` or `object`|The currency amount that the destination account would receive in a transaction.|
+|`send_max`| |`string` or `object`| The currency amount that would be spent in the transaction.|
+|`paths`| |`array`|Array of arrays of objects, representing payment paths to check. You can use this to keep updated on changes to particular paths you already know about, or to check the overall cost to make a payment along a certain path.|
+
+This proposal puts forward the following addition:
+
+| Field Name | Required? | JSON Type | Description |
+|------------|-----------|-----------|-------------|
+|`domain`| |`string`|The object ID of a `PermissionedDomain` object. If this field is included, then the paths will be filtered to only show the valid paths for that domain.|
 
 ### 9.2. Response Fields
 
-| Field Name | Required? | JSON Type | Description|
-|-------|---------|---------|---------|
-|`account`|✔️|`string`|The account.|
--->
+| Field Name | Always Present? | JSON Type | Description |
+|------------|-----------------|-----------|------------|
+|`alternatives`|✔️|`array`|An array of objects with suggested paths to take, as described below. If empty, then no paths were found connecting the source and destination accounts.|
+|`destination_account`|✔️|`string`|The address of the account that would receive a transaction.|
+|`destination_amount`|✔️|`string` or `object`|The currency amount that the destination would receive in a transaction.|
+|`source_account`|✔️|`string`|The address that would send a transaction.|
+|`full_reply`|✔️|`boolean`|If `false`, this is the result of an incomplete search. A later reply may have a better path. If `true`, then this is the best path found. (It is still theoretically possible that a better path could exist, but `rippled` won't find it.) Until you close the pathfinding request, `rippled` continues to send updates each time a new ledger closes.|
 
 ## 10. RPC: `ripple_path_find`
 
 The [`ripple_path_find` RPC method](https://xrpl.org/ripple_path_find.html) already exists on the XRPL. This proposal suggests some modifications to also support permissioned DEX domains.
 
-Edit this to support specific domain objects.
-
-<!--
 ### 10.1. Request Fields
 
-| Field Name | Required? | JSON Type | Description|
-|-------|---------|---------|---------|
-|`account`|✔️|`string`|The account.|
+| Field Name | Required? | JSON Type | Description |
+|------------|-----------|-----------|-------------|
+|`source_account`|✔️|`string`|The address of the account that would send funds in a transaction|
+|`destination_account`|✔️|`string`|The address of the account that would receive funds in a transaction|
+|`destination_amount`|✔️|`string` or `object`|The currency amount that the destination account would receive in a transaction.|
+|`send_max`| |`string` or `object`|The currency amount that would be spent in the transaction. Cannot be used with `source_currencies`.|
+|`source_currencies`| |`array`|An array of currencies that the source account might want to spend. Each entry in the array should be a JSON object with a mandatory `currency` field and optional `issuer` field, like how currency amounts are specified.|
+|`ledger_hash`| |`string`|A 20-byte hex string for the ledger version to use. |
+|`ledger_index`| |`string` or `number`|The ledger index of the ledger to use, or a shortcut string to choose a ledger automatically.|
+
+This proposal puts forward the following addition:
+
+| Field Name | Required? | JSON Type | Description |
+|------------|-----------|-----------|-------------|
+|`domain`| |`string`|The object ID of a `PermissionedDomain` object. If this field is included, then the paths will be filtered to only show the valid paths for that domain.|
 
 ### 10.2. Response Fields
 
-| Field Name | Required? | JSON Type | Description|
-|-------|---------|---------|---------|
-|`account`|✔️|`string`|The account.|
--->
+| Field Name | Always Present? | JSON Type | Description |
+|------------|-----------------|-----------|------------|
+|`alternatives`|✔️|`array`|An array of objects with possible paths to take, as described below. If empty, then there are no paths connecting the source and destination accounts.|
+|`destination_account`|✔️|`string`|The address of the account that would receive a payment transaction.|
+|`destination_currencies`|✔️|`array`|Array of strings representing the currencies that the destination accepts.|
 
 ## 11. Examples
 
@@ -405,11 +428,14 @@ TODO: add example transactions for the example flows laid out in 1.3
 ## n+1. Open Questions
 
 * Should an account that has DepositAuth enabled be forced to use domains? i.e. the `OfferCreate` will fail if they don't have a `DomainID`. Or is it more of an "at your own risk" situation?
-* Can an offer be part of multiple domains?
+* Does a permissioned offer need to be able to be part of multiple domains?
 * Should there be a flag on a domain to make it immutable and/or undeleteable?
 * Does the domain owner need to have trustlines for the tokens/hold the credentials?
 * Does the domain owner need to be able to freeze/clawback tokens (from the PRD) or delete credentials?
 	* If so, how? There's no real "domain membership" - if you hold one of the domain credentials you're a "domain member" - so it doesn't seem fair that a domain owner can freeze/clawback your tokens.
+* Instead of having a single "Domain" object that stores all the rules, should the rules be each split out into their own object?
+	* Would remove the number of rules restriction, but then each rule would cost one reserve.
+	* Would make it easier to support black/whitelisting though (a la DepositAuth).
 
 # Appendix
 
@@ -428,6 +454,8 @@ Performance tests will need to be conducted once the implementation is done. The
 The term `Domain` is already used in the [account settings](https://xrpl.org/docs/references/protocol/transactions/types/accountset/#domain), so it would be confusing to use just the term `Domain` for this.
 
 ### A.4: Why do you need a domain? Why not just indicate what credentials you accept on the offer itself?
+
+
 
 ### A.5: Can a domain owner also be a credential issuer or token issuer?
 
