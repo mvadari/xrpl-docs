@@ -436,6 +436,7 @@ TODO: add example transactions for the example flows laid out in 1.3
 * Instead of having a single "Domain" object that stores all the rules, should the rules be each split out into their own object?
 	* Would remove the number of rules restriction, but then each rule would cost one reserve.
 	* Would make it easier to support black/whitelisting though (a la DepositAuth).
+* What other rule types might we want? (Not necessarily now, but also in the future)
 
 # Appendix
 
