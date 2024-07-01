@@ -92,13 +92,15 @@ This object represents a DEX domain.
 |`LedgerIndex`| ✔️|`string`|`Hash256`|The unique ID of the ledger object.|
 |`LedgerEntryType`| ✔️|`string`|`UInt16`|The ledger object's type (`PermissionedDomain`).|
 |`Owner`| ✔️|`string`|`AccountID`|The account that controls the settings of the domain.|
-|`Sequence`|✔️|`number`|`UInt32`|The `Sequence` value of the `OfferCreate` transaction that created this offer. Used in combination with the `Account` to identify this offer.|
+|`Sequence`|✔️|`number`|`UInt32`|The `Sequence` value of the `PermissionedDomainSet` transaction that created this offer. Used in combination with the `Account` to identify this offer.|
 |`AcceptedCredentials`| |`array`|`STArray`|The credentials that are accepted by the domain. Ownership of one of these credentials automatically makes you a member of the domain.|
 |`AcceptedTokens`| |`array`|`STArray`|The tokens that are allowed by the domain.|
 
 #### 2.1.1. `LedgerIndex`
 
 The ID of this object will be a hash that incorporates the `Owner` and `Sequence` fields, combined with a unique space key for `PermissionedDomain` objects, which will be defined during implementation.
+
+This value will be used wherever a `DomainID` is required.
 
 #### 2.1.2. `AcceptedCredentials`
 
@@ -461,6 +463,10 @@ The term `Domain` is already used in the [account settings](https://xrpl.org/doc
 ### A.5: Can a domain owner also be a credential issuer or token issuer?
 
 Yes.
+
+### A.6: Can I have a domain where XRP is _not_ an accepted token?
+
+No, XRP must always be an accepted token, since transaction fees are paid in XRP and autobridging may also happen via XRP.
 
 ## Appendix B: Alternate Designs
 
