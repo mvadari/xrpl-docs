@@ -113,13 +113,14 @@ This is an array of `Credentials` objects. The maximum length of this array is 1
 
 #### 2.1.3. `AcceptedTokens`
 
-This is an array of `Issue` objects, which represent issued currencies on the XRPL. The maximum length of this array is 10.
+This is an array of `Issue` objects, which represent issued currencies on the XRPL. The maximum length of this array is 10. For each element, either an issued currency or an MPT must be specified.
 
 XRP is automatically included, and therefore will not be included in this array.
 
 | Field Name | Required? | JSON Type | Internal Type | Description |
 |------------|-----------|-----------|---------------|-------------|
-|`Token`|✔️|`object`|`Issue`|The token.|
+|`Token`| |`object`|`Issue`|The token.|
+|`MPToken`| |`object`|`MPTIssue`|The MPToken.|
 
 ### 2.2. Account Deletion
 
