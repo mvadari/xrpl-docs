@@ -41,11 +41,12 @@ This feature will require an amendment, tentatively titled `featurePermissionedD
 * Clawback
 * Freezing
 * Multisign
+* Payment paths
 * Why all this isn't enough - DEX activity
 
 ### 1.2. Terminology
 
-* **Offer Crossing**: Two offers **cross** if one is selling a token at a price that's actually lower than the price the other is offering to sell it at.
+* **Offer Crossing**: Two offers **cross** if one is selling a token at a price that's actually lower than the price the other is offering to buy it at.
 * **Offer Filling**: Two offers **fill** each other if the trade executes and the sale goes through. Offers can be partially filled, based on the flags (settings) of the offers.
 * **Domain**: A collection of rules indicating what accounts and trades may be a part of it. This spec includes credential-gating and token-gating, but more options could be added in the future.
 * **Domain Rules**: The set of rules that govern a domain, i.e. the credentials and tokens it accepts.
@@ -79,7 +80,7 @@ A permissioned offer will only be filled by valid domain offers.
 
 An open offer can be filled by any offer on the open DEX, but can _also_ be filled by any permissioned offer, if the open offer is a valid domain offer.
 
-The fact that traders don't need to place a permissioned offer in order to fill offers in that domain enables arbitrage and mixing of liquidity much more easily, as traders do not have to place multiple offers in multiple domains. It also prevents the creation of walled gardens of liquidity.
+The fact that traders don't need to place a permissioned offer in order to fill offers in that domain enables arbitrage and mixing of liquidity much more easily, as traders do not have to place multiple offers in multiple domains. It also allows traders to avoid walled gardens of liquidity.
 
 ## 2. On-Ledger Object: `PermissionedDomain`
 
@@ -297,14 +298,14 @@ We propose these additions:
 
 #### 7.1.1. `DomainID`
 
-The `DomainID` can only be included if the payment is a cross-currency or partial payment (i.e. if the payment is going to interact with the DEX). It should only be included if the payment is permissioned.
+The `DomainID` can only be included if the payment is a cross-currency payment (i.e. if the payment is going to interact with the DEX). It should only be included if the payment is permissioned.
 
 ### 7.2. Failure Conditions
 
 The existing set of failure conditions for `Payment` will continue to exist.
 
 There will also be the following in addition, if the `DomainID` is included:
-* The payment isn't a cross-currency or partial payment.
+* The payment isn't a cross-currency payment.
 * The domain doesn't exist.
 * The `Account` is not a domain member.
 * The currencies used in `Amount`, `SendMax`, and `DeliverMin` are not permitted as a part of the domain's rules.
@@ -430,7 +431,6 @@ TODO: add example transactions for the example flows laid out in 1.3
 
 ## n+1. Open Questions
 
-* Should an account that has DepositAuth enabled be forced to use domains? i.e. the `OfferCreate` will fail if they don't have a `DomainID`. Or is it more of an "at your own risk" situation?
 * Does a permissioned offer need to be able to be part of multiple domains?
 * Should there be a flag on a domain to make it immutable and/or undeleteable?
 * Does the domain owner need to have trustlines for the tokens/hold the credentials?
@@ -439,6 +439,7 @@ TODO: add example transactions for the example flows laid out in 1.3
 * Instead of having a single "Domain" object that stores all the rules, should the rules be each split out into their own object?
 	* Would remove the number of rules restriction, but then each rule would cost one reserve.
 	* Would make it easier to support black/whitelisting though (a la DepositAuth).
+	* Update: I don't think this works because you need a list to iterate through.
 * What other rule types might we want? (Not necessarily now, but also in the future)
 
 # Appendix
@@ -468,6 +469,10 @@ Yes.
 ### A.6: Can I have a domain where XRP is _not_ an accepted token?
 
 No, XRP must always be an accepted token, since transaction fees are paid in XRP and autobridging may also happen via XRP.
+
+### A.7: Will an account with Deposit Authorization enabled be forced to use Permissioned DEXes? 
+
+No.
 
 ## Appendix B: Alternate Designs
 
