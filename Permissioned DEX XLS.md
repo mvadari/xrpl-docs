@@ -110,7 +110,7 @@ This is an array of `Credentials` objects. The maximum length of this array is 1
 | Field Name | Required? | JSON Type | Internal Type | Description |
 |------------|-----------|-----------|---------------|-------------|
 |`Issuer`|✔️|`string`|`AccountID`|The issuer of the credential.|
-|`CredentialType`| |`number`|`UInt32`|A value to identify the type of credential from the issuer.|
+|`CredentialType`| |`string`|`Blob`|A value to identify the type of credential from the issuer.|
 
 #### 2.1.3. `AcceptedTokens`
 
