@@ -36,6 +36,7 @@ This feature will require an amendment, tentatively titled `featurePermissionedD
 
 ### 1.1. Background: The Current State of Permissioning and Compliance on the XRPL
 
+* Goal: Compliance by Design
 * Deposit Auth
 * Authorized Trustlines
 * Clawback
@@ -266,6 +267,7 @@ If the `DomainID` is included in the `OfferCreate` transaction, whenever an offe
 
 If the `DomainID` is not included in the `OfferCreate` transaction, whenever an offer with a `DomainID` is crossed:
 * The offer outlined in the `OfferCreate` transaction will be checked to see if it is a valid domain offer. If it does, it will fill that offer as per the rules of the `OfferCreate`'s parameters. If it doesn't, the offer will be skipped.
+	* If the on-ledger offer is no longer a valid domain offer (i.e. the credential expired, or was removed from the domain), the offer will be deleted (just as it would be if it were unfunded).
 
 ## 7. Transaction: `Payment`
 
@@ -431,8 +433,8 @@ TODO: add example transactions for the example flows laid out in 1.3
 
 ## n+1. Open Questions
 
-* Does a permissioned offer need to be able to be part of multiple domains?
-* Should there be a flag on a domain to make it immutable and/or undeleteable?
+* Does a permissioned offer need to be able to be part of multiple domains? If so, the `DomainID` field should be replaced with a `DomainIDs` field (to accommodate a list)
+* Should there be a flag on a domain to make it immutable? And/or undeleteable?
 * Does the domain owner need to have trustlines for the tokens/hold the credentials?
 * Does the domain owner need to be able to freeze/clawback tokens (from the PRD) or delete credentials?
 	* If so, how? There's no real "domain membership" - if you hold one of the domain credentials you're a "domain member" - so it doesn't seem fair that a domain owner can freeze/clawback your tokens.
