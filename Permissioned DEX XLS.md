@@ -213,7 +213,7 @@ There will also be the following in addition, if the `DomainID` is included:
 
 ### 4.3. State Changes
 
-The existing set of state changes for `Payment` will continue to exist.
+The existing set of state changes for a successful `Payment` transaction will continue to exist.
 
 ## 5. RPC: `book_offers`
 
