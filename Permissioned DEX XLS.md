@@ -21,7 +21,7 @@ This proposal introduces a permissioned DEX system for the XRPL. By integrating 
 
 ## 1. Overview
 
-This proposal builds on top of [XLS-70d](https://github.com/XRPLF/XRPL-Standards/discussions/202) and [XLS-TBD, Permissioned Domains](https://gist.github.com/mvadari/19568595d558dbf5b22b1355b9e729e8), as credentials are needed for permissioning.
+This proposal builds on top of [XLS-70d](https://github.com/XRPLF/XRPL-Standards/discussions/202) and [XLS-TBD, Permissioned Domains](https://gist.github.com/mvadari/19568595d558dbf5b22b1355b9e729e8), as Credentials and Permissioned Domains are needed to handle the permissioning aspect.
 
 We propose:
 * Modifying the `Offer` ledger object.
