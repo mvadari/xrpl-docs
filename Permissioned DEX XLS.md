@@ -327,7 +327,7 @@ TODO: add example transactions for the example flows laid out in 1.3
 * No offer with a `DomainID` field will be filled by an invalid domain offer.
 	* NOTE: This can't be done in the standard `InvariantChecks`, but could theoretically be embedded in the payment engine somewhere.
 
-## 10. Security
+## 11. Security
 
 * You have to trust the issuers of the credentials.
 * You have to trust the domain creator. You can be your own domain creator, though.
