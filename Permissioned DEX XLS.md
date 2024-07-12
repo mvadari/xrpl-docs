@@ -1,7 +1,6 @@
-
 <pre>
 Title:       <b>Permissioned DEXes</b>
-Revision:    <b>1</b> (2024-07-01)
+Revision:    <b>1</b> (2024-07-20)
 
 Author:      <a href="mailto:mvadari@ripple.com">Mayukha Vadari</a>
 
@@ -22,12 +21,9 @@ This proposal introduces a permissioned DEX system for the XRPL. By integrating 
 
 ## 1. Overview
 
-This proposal builds on top of [XLS-70d](https://github.com/XRPLF/XRPL-Standards/discussions/202), as credentials are needed for permissioning.
+This proposal builds on top of [XLS-70d](https://github.com/XRPLF/XRPL-Standards/discussions/202) and [XLS-TBD, Permissioned Domains](https://gist.github.com/mvadari/19568595d558dbf5b22b1355b9e729e8), as credentials are needed for permissioning.
 
 We propose:
-* Creating a `PermissionedDomain` ledger object.
-* Creating a `PermissionedDomainSet` transaction.
-* Creating a `PermissionedDomainDelete` transaction.
 * Modifying the `Offer` ledger object.
 * Modifying the `OfferCreate` transaction.
 * Modifying the `Payment` transaction.
@@ -49,10 +45,6 @@ This feature will require an amendment, tentatively titled `featurePermissionedD
 
 * **Offer Crossing**: Two offers **cross** if one is selling a token at a price that's actually lower than the price the other is offering to buy it at.
 * **Offer Filling**: Two offers **fill** each other if the trade executes and the sale goes through. Offers can be partially filled, based on the flags (settings) of the offers.
-* **Domain**: A collection of rules indicating what accounts and trades may be a part of it. This spec includes credential-gating and token-gating, but more options could be added in the future.
-* **Domain Rules**: The set of rules that govern a domain, i.e. the credentials and tokens it accepts.
-* **Domain Owner**: The account that created a domain, and is the only one that can modify its rules or delete it.
-* **Domain Member**: An account that satisfies the rules of the domain (i.e. has one of the credentials that are accepted by the domain). There is no explicit joining step; as long as the account has a valid credential, it is a member.
 * **Permissioned DEX**: The subset of the DEX that operates within the rules of a specific domain.
 * **Open DEX**: The unpermissioned DEX that has no restrictions.
 * **Permissioned Offer/Payment**: An offer/cross-currency payment that can only be filled by offers that are a part of a specific domain.
@@ -83,105 +75,11 @@ An open offer can be filled by any offer on the open DEX, but can _also_ be fill
 
 The fact that traders don't need to place a permissioned offer in order to fill offers in that domain enables arbitrage and mixing of liquidity much more easily, as traders do not have to place multiple offers in multiple domains. It also allows traders to avoid walled gardens of liquidity.
 
-## 2. On-Ledger Object: `PermissionedDomain`
-
-This object represents a DEX domain.
-
-### 2.1. Fields
-
-| Field Name | Required? | JSON Type | Internal Type | Description |
-|------------|-----------|-----------|---------------|-------------|
-|`LedgerIndex`| ✔️|`string`|`Hash256`|The unique ID of the ledger object.|
-|`LedgerEntryType`| ✔️|`string`|`UInt16`|The ledger object's type (`PermissionedDomain`).|
-|`Owner`| ✔️|`string`|`AccountID`|The account that controls the settings of the domain.|
-|`Sequence`|✔️|`number`|`UInt32`|The `Sequence` value of the `PermissionedDomainSet` transaction that created this offer. Used in combination with the `Account` to identify this offer.|
-|`AcceptedCredentials`| |`array`|`STArray`|The credentials that are accepted by the domain. Ownership of one of these credentials automatically makes you a member of the domain.|
-|`AcceptedTokens`| |`array`|`STArray`|The tokens that are allowed by the domain.|
-
-#### 2.1.1. `LedgerIndex`
-
-The ID of this object will be a hash that incorporates the `Owner` and `Sequence` fields, combined with a unique space key for `PermissionedDomain` objects, which will be defined during implementation.
-
-This value will be used wherever a `DomainID` is required.
-
-#### 2.1.2. `AcceptedCredentials`
-
-This is an array of `Credentials` objects. The maximum length of this array is 10.
-
-| Field Name | Required? | JSON Type | Internal Type | Description |
-|------------|-----------|-----------|---------------|-------------|
-|`Issuer`|✔️|`string`|`AccountID`|The issuer of the credential.|
-|`CredentialType`| |`string`|`Blob`|A value to identify the type of credential from the issuer.|
-
-#### 2.1.3. `AcceptedTokens`
-
-This is an array of `Issue` objects, which represent issued currencies on the XRPL. The maximum length of this array is 10. For each element, either an issued currency or an MPT must be specified.
-
-XRP is automatically included, and therefore will not be included in this array.
-
-| Field Name | Required? | JSON Type | Internal Type | Description |
-|------------|-----------|-----------|---------------|-------------|
-|`Token`| |`object`|`Issue`|The token.|
-|`MPToken`| |`object`|`MPTIssue`|The MPToken.|
-
-### 2.2. Account Deletion
-
-The `PermissionedDomain` object is not a [deletion blocker](https://xrpl.org/docs/concepts/accounts/deleting-accounts/#requirements).
-
-## 3. Transaction: `PermissionedDomainSet`
-
-This transaction creates or modifies a `PermissionedDomain` object.
-
-### 3.1. Fields
-
-| Field Name | Required? | JSON Type | Internal Type | Description |
-|------------|-----------|-----------|---------------|-------------|
-|`TransactionType`| ✔️|`string`|`UInt16`|The transaction type (`PermissionedDomainSet`).|
-|`Account`| ✔️|`string`|`AccountID`|The account sending the transaction.|
-|`DomainID`| |`string`|`Hash256`|The domain to modify. Must be included if modifying an existing domain.|
-|`AcceptedCredentials`| |`array`|`STArray`|The credentials that are accepted by the domain. Ownership of one of these credentials automatically makes you a member of the domain. An empty array means deleting the field.|
-|`AcceptedTokens`| |`array`|`STArray`|The tokens that are allowed by the domain. An empty array means deleting the field.|
-
-### 3.2. Failure Conditions
-
-* `Issuer` doesn't exist on one or more of the credentials in `AcceptedCredentials`.
-* The resulting `PermissionedDomain` object doesn't have any accepted credentials or tokens.
-* The `AcceptedTokens` or `AcceptedCredentials` arrays are too long.
-* XRP is included in the `AcceptedTokens` array (since it's included by default).
-* If `DomainID` is included:
-	* That domain doesn't exist.
-	* The account isn't the domain owner.
-
-### 3.3. State Changes
-
-* Creates or modifies a `PermissionedDomain` object.
-
-## 4. Transaction: `PermissionedDomainDelete`
-
-This transaction deletes a `PermissionedDomain` object.
-
-### 4.1. Fields
-
-| Field Name | Required? | JSON Type | Internal Type | Description |
-|------------|-----------|-----------|---------------|-------------|
-|`TransactionType`| ✔️|`string`|`UInt16`|The transaction type (`PermissionedDomainDelete`).|
-|`Account`| ✔️|`string`|`AccountID`|The account sending the transaction.|
-|`DomainID`| |`string`|`Hash256`|The domain to delete.|
-
-### 4.2. Failure Conditions
-
-* The domain specified in `DomainID` doesn't exist.
-* The account isn't the owner of the domain.
-
-### 4.3. State Changes
-
-* Deletes a `PermissionedDomain` object.
-
-## 5. On-Ledger Object: `Offer`
+## 2. On-Ledger Object: `Offer`
 
 The `Offer` object tracks an offer placed on the CLOB DEX. This object type already exists on the XRPL, but is being extended as a part of this spec to also support permissioned DEX domains.
 
-### 5.1. Fields
+### 2.1. Fields
 
 <details>
 <summary>
@@ -210,23 +108,23 @@ We propose these additions:
 |------------|-----------|-----------|---------------|-------------|
 |`DomainID`| |`string`|`Hash256`|The domain that the offer must be a part of.|
 
-#### 5.1.1. `DomainID`
+#### 2.1.1. `DomainID`
 
 A permissioned offer has a `DomainID` field included.
 
 An open offer does not need to include a `DomainID` field.
 
-### 5.2. Offer Invalidity
+### 2.2. Offer Invalidity
 
 An offer on the orderbook can become invalid if the domain specified by the `DomainID` field is deleted, and will no longer be filled. It will be automatically deleted when crossed, like an unfunded offer.
 
 The same will be true if the credential that allows the offer's owner to be a member of the domain expires or is deleted.
 
-## 6. Transaction: `OfferCreate`
+## 3. Transaction: `OfferCreate`
 
 The `OfferCreate` transaction creates an offer on the CLOB DEX. This transaction type already exists on the XRPL, but is being extended as a part of this spec to also support permissioned DEX domains.
 
-### 6.1. Fields
+### 3.1. Fields
 
 <details>
 <summary>
@@ -248,7 +146,7 @@ We propose these additions:
 |------------|-----------|-----------|---------------|-------------|
 |`DomainID`| |`string`|`Hash256`|The domain that the offer must be a part of.|
 
-### 6.2. Failure Conditions
+### 3.2. Failure Conditions
 
 The existing set of failure conditions for `OfferCreate` will continue to exist.
 
@@ -256,7 +154,7 @@ There will also be the following in addition, if the `DomainID` field is include
 * The domain doesn't exist.
 * The offer is not a valid domain offer.
 
-### 6.3. State Changes
+### 3.3. State Changes
 
 The existing set of state changes for `OfferCreate` will continue to exist.
 
@@ -269,11 +167,11 @@ If the `DomainID` is not included in the `OfferCreate` transaction, whenever an 
 * The offer outlined in the `OfferCreate` transaction will be checked to see if it is a valid domain offer. If it does, it will fill that offer as per the rules of the `OfferCreate`'s parameters. If it doesn't, the offer will be skipped.
 	* If the on-ledger offer is no longer a valid domain offer (i.e. the credential expired, or was removed from the domain), the offer will be deleted (just as it would be if it were unfunded).
 
-## 7. Transaction: `Payment`
+## 4. Transaction: `Payment`
 
 A `Payment` transaction represents a transfer of value from one account to another, and can involve currency conversions and crossing the orderbook. This transaction type already exists on the XRPL, but is being extended as a part of this spec to also support permissioned DEX domains.
 
-### 7.1. Fields
+### 4.1. Fields
 
 <details>
 <summary>
@@ -298,11 +196,11 @@ We propose these additions:
 |------------|-----------|-----------|---------------|-------------|
 |`DomainID`| |`string`|`Hash256`|The domain that the offer must be a part of.|
 
-#### 7.1.1. `DomainID`
+#### 4.1.1. `DomainID`
 
 The `DomainID` can only be included if the payment is a cross-currency payment (i.e. if the payment is going to interact with the DEX). It should only be included if the payment is permissioned.
 
-### 7.2. Failure Conditions
+### 4.2. Failure Conditions
 
 The existing set of failure conditions for `Payment` will continue to exist.
 
@@ -313,15 +211,15 @@ There will also be the following in addition, if the `DomainID` is included:
 * The currencies used in `Amount`, `SendMax`, and `DeliverMin` are not permitted as a part of the domain's rules.
 * The paths do not satisfy the domain's rules.
 
-### 7.3. State Changes
+### 4.3. State Changes
 
 The existing set of state changes for `Payment` will continue to exist.
 
-## 8. RPC: `book_offers`
+## 5. RPC: `book_offers`
 
 The [`book_offers` RPC method](https://xrpl.org/book_offers.html) already exists on the XRPL. This proposal suggests some modifications to also support permissioned DEX domains.
 
-### 8.1. Request Fields
+### 5.1. Request Fields
 
 As a reference, here are the fields that `book_offers` currently accepts:
 
@@ -340,7 +238,7 @@ This proposal puts forward the following addition:
 |------------|-----------|-----------|-------------|
 |`domain`| |`string`|The object ID of a `PermissionedDomain` object. If this field is included, then the offers will be filtered to only show the valid domain offers for that domain.|
 
-### 8.2. Response Fields
+### 5.2. Response Fields
 
 This proposal does not suggest any changes to the response fields. As a reference, here are the fields that `book_offers` currently returns:
 
@@ -352,13 +250,13 @@ This proposal does not suggest any changes to the response fields. As a referenc
 |`offers`|✔️|`array`|Array of offer objects, each of which has the fields of an Offer object.|
 
 
-## 9. RPC: `path_find`
+## 6. RPC: `path_find`
 
 The [`path_find` RPC method](https://xrpl.org/path_find.html) already exists on the XRPL. This proposal suggests some modifications to also support permissioned DEX domains.
 
 Only the `create` subcommand will be affected.
 
-### 9.1. Request Fields
+### 6.1. Request Fields
 
 | Field Name | Required? | JSON Type | Description |
 |------------|-----------|-----------|-------------|
@@ -375,7 +273,7 @@ This proposal puts forward the following addition:
 |------------|-----------|-----------|-------------|
 |`domain`| |`string`|The object ID of a `PermissionedDomain` object. If this field is included, then the paths will be filtered to only show the valid paths for that domain.|
 
-### 9.2. Response Fields
+### 6.2. Response Fields
 
 | Field Name | Always Present? | JSON Type | Description |
 |------------|-----------------|-----------|------------|
@@ -385,11 +283,11 @@ This proposal puts forward the following addition:
 |`source_account`|✔️|`string`|The address that would send a transaction.|
 |`full_reply`|✔️|`boolean`|If `false`, this is the result of an incomplete search. A later reply may have a better path. If `true`, then this is the best path found. (It is still theoretically possible that a better path could exist, but `rippled` won't find it.) Until you close the pathfinding request, `rippled` continues to send updates each time a new ledger closes.|
 
-## 10. RPC: `ripple_path_find`
+## 7. RPC: `ripple_path_find`
 
 The [`ripple_path_find` RPC method](https://xrpl.org/ripple_path_find.html) already exists on the XRPL. This proposal suggests some modifications to also support permissioned DEX domains.
 
-### 10.1. Request Fields
+### 7.1. Request Fields
 
 | Field Name | Required? | JSON Type | Description |
 |------------|-----------|-----------|-------------|
@@ -407,7 +305,7 @@ This proposal puts forward the following addition:
 |------------|-----------|-----------|-------------|
 |`domain`| |`string`|The object ID of a `PermissionedDomain` object. If this field is included, then the paths will be filtered to only show the valid paths for that domain.|
 
-### 10.2. Response Fields
+### 7.2. Response Fields
 
 | Field Name | Always Present? | JSON Type | Description |
 |------------|-----------------|-----------|------------|
@@ -415,17 +313,21 @@ This proposal puts forward the following addition:
 |`destination_account`|✔️|`string`|The address of the account that would receive a payment transaction.|
 |`destination_currencies`|✔️|`array`|Array of strings representing the currencies that the destination accepts.|
 
-## 11. Examples
+## 8. RPC: Orderbook Subscription
+
+TODO
+
+## 9. Examples
 
 TODO: add example transactions for the example flows laid out in 1.3
 
-## 12. Invariants
+## 10. Invariants
 
 * You cannot have a domain with no rules.
 * No offer with a `DomainID` field will be filled by an invalid domain offer.
 	* NOTE: This can't be done in the standard `InvariantChecks`, but could theoretically be embedded in the payment engine somewhere.
 
-## 13. Security
+## 10. Security
 
 * You have to trust the issuers of the credentials.
 * You have to trust the domain creator. You can be your own domain creator, though.
@@ -443,6 +345,7 @@ TODO: add example transactions for the example flows laid out in 1.3
 	* Would make it easier to support black/whitelisting though (a la DepositAuth).
 	* Update: I don't think this works because you need a list to iterate through.
 * What other rule types might we want? (Not necessarily now, but also in the future)
+* Should there be a "domain membership" object? It would enable blacklisting etc.
 
 # Appendix
 
@@ -456,26 +359,16 @@ AMMs are not explicitly supported within permissioned DEXes in this proposal. Th
 
 Performance tests will need to be conducted once the implementation is done. The spec may be modified if such tests show serious performance reduction.
 
-### A.3: Why is the name `PermissionedDomain` so long? Why not shorten it to just `Domain`?
+### A.3: Why do you need a domain? Why not just indicate what credentials you accept on the offer itself?
 
-The term `Domain` is already used in the [account settings](https://xrpl.org/docs/references/protocol/transactions/types/accountset/#domain), so it would be confusing to use just the term `Domain` for this.
+TODO: ask Product
 
-### A.4: Why do you need a domain? Why not just indicate what credentials you accept on the offer itself?
-
-
-
-### A.5: Can a domain owner also be a credential issuer or token issuer?
-
-Yes.
-
-### A.6: Can I have a domain where XRP is _not_ an accepted token?
-
-No, XRP must always be an accepted token, since transaction fees are paid in XRP and autobridging may also happen via XRP.
-
-### A.7: Will an account with Deposit Authorization enabled be forced to use Permissioned DEXes? 
+### A.4: Will an account with Deposit Authorization enabled be forced to use Permissioned DEXes? 
 
 No.
 
 ## Appendix B: Alternate Designs
 
 Maybe mention the platonic ideal design here
+
+n token vs 2 token orderbook
