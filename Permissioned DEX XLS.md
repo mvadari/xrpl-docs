@@ -182,12 +182,12 @@ As a reference, [here](https://xrpl.org/docs/references/protocol/transactions/ty
 | Field Name | Required? | JSON Type | Internal Type | Description |
 |------------|-----------|-----------|---------------|-------------|
 |`Amount`|✔️|`string`|`Amount`|The maximum amount of currency to deliver. For non-XRP amounts, the nested field names MUST be lower-case. If the `tfPartialPayment` flag is set, deliver _up to_ this amount instead.|
-|`DeliverMin`||`string`|`Amount`|The minimum amount of destination currency this transaction should deliver. Only valid if this is a partial payment. For non-XRP amounts, the nested field names are lower-case.|
+|`DeliverMin`| |`string`|`Amount`|The minimum amount of destination currency this transaction should deliver. Only valid if this is a partial payment. For non-XRP amounts, the nested field names are lower-case.|
 |`Destination`|✔️|`string`|`AccountID`|The unique address of the account receiving the payment.|
-|`DestinationTag`||`number`|`UInt32`|An arbitrary tag that identifies the reason for the payment to the destination, or a hosted recipient to pay.|
-|`InvoiceID`||`string`|`Hash256`|An arbitrary 256-bit hash representing a specific reason or identifier for this payment.|
-|`Paths`||`array`|`PathSet`|Array of payment paths to be used for this transaction. Must be omitted for XRP-to-XRP transactions.|
-|`SendMax` ||`string` or `object`|`Amount`|Highest amount of source currency this transaction is allowed to cost, including transfer fees, exchange rates, and [slippage](http://en.wikipedia.org/wiki/Slippage_%28finance%29). Does not include the XRP destroyed as a cost for submitting the transaction. For non-XRP amounts, the nested field names MUST be lower-case. Must be supplied for cross-currency/cross-issue payments. Must be omitted for XRP-to-XRP payments.|.|
+|`DestinationTag`| |`number`|`UInt32`|An arbitrary tag that identifies the reason for the payment to the destination, or a hosted recipient to pay.|
+|`InvoiceID`| |`string`|`Hash256`|An arbitrary 256-bit hash representing a specific reason or identifier for this payment.|
+|`Paths`| |`array`|`PathSet`|Array of payment paths to be used for this transaction. Must be omitted for XRP-to-XRP transactions.|
+|`SendMax` | |`string` or `object`|`Amount`|Highest amount of source currency this transaction is allowed to cost, including transfer fees, exchange rates, and [slippage](http://en.wikipedia.org/wiki/Slippage_%28finance%29). Does not include the XRP destroyed as a cost for submitting the transaction. For non-XRP amounts, the nested field names MUST be lower-case. Must be supplied for cross-currency/cross-issue payments. Must be omitted for XRP-to-XRP payments.|.|
 </details>
 
 We propose these additions:
@@ -336,17 +336,6 @@ TODO: add example transactions for the example flows laid out in 1.3
 ## n+1. Open Questions
 
 * Does a permissioned offer need to be able to be part of multiple domains? If so, the `DomainID` field should be replaced with a `DomainIDs` field (to accommodate a list)
-* Should there be a flag on a domain to make it immutable? And/or undeleteable?
-* Does the domain owner need to have trustlines for the tokens/hold the credentials?
-* Does the domain owner need to be able to freeze/clawback tokens (from the PRD) or delete credentials?
-	* If so, how? There's no real "domain membership" - if you hold one of the domain credentials you're a "domain member" - so it doesn't seem fair that a domain owner can freeze/clawback your tokens.
-* Instead of having a single "Domain" object that stores all the rules, should the rules be each split out into their own object?
-	* Would remove the number of rules restriction, but then each rule would cost one reserve.
-	* Would make it easier to support black/whitelisting though (a la DepositAuth).
-	* Each account could probably only have one domain, then.
-	* Update: I don't think this works because you need a list to iterate through.
-* What other rule types might we want? (Not necessarily now, but also in the future)
-* Should there be a "domain membership" object? It would enable blacklisting etc.
 
 # Appendix
 
