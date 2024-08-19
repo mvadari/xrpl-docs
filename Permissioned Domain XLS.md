@@ -1,6 +1,6 @@
 <pre>
 Title:       <b>Permissioned Domains</b>
-Revision:    <b>1</b> (2024-07-20)
+Revision:    <b>1</b> (2024-08-20)
 
 Author:      <a href="mailto:mvadari@ripple.com">Mayukha Vadari</a>
 
@@ -182,5 +182,5 @@ Yes, if there is a need.
 
 ### A.5: Can I AND credentials together?
 
-No (because I can't figure out a way to make that work smoothly).
+No, because it is difficult to make a clean design for that capability.
 
