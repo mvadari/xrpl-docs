@@ -48,13 +48,15 @@ While these features provide an excellent foundation for compliance, they fall s
 * **Offer Filling**: Two offers **fill** each other if the trade executes and the sale goes through. Offers can be partially filled, based on the flags (settings) of the offers.
 * **Permissioned DEX**: The subset of the DEX that operates within the rules of a specific domain.
 * **Open DEX**: The un-permissioned DEX that has no restrictions.
+* **Permissioned Orderbook**: An orderbook that operates within the rules of a specific domain.
+* **Open Orderbook**: An un-permissioned orderbook that has no restrictions.
 * **Permissioned Offer/Payment**: An offer/cross-currency payment that can only be filled by offers that are a part of a specific domain.
 * **Open Offer/Payment** or **Unpermissioned Offer/Payment**: An offer/cross-currency payment that is able to trade on the open DEX or potentially in permissioned DEXes, but doesn't have any restrictions itself.
 * **Valid Domain Offer/Payment**: An offer/cross-currency payment that satisfies the rules of a domain (i.e. the account is a domain member, and the tokens in the offer are accepted). This must be a permissioned offer.
 
 ### 1.3. Basic Flow
 
-#### 1.3.1. Initial setup
+#### 1.3.1. Initial Setup
 * Owen, a domain owner, creates his domain with a set of KYC credentials and allowed tokens (including a certain USD and EUR).
 * Tracy, a trader, is operating in Owen's regulatory environment and has strict regulatory requirements - she cannot receive liquidity from non-KYCed accounts. She has one of Owen's accepted KYC credentials, and will only be placing permissioned offers.
 * Marko, a market maker, wants to arbitrage offers in Owen's domain, as there is often a significant price difference inside and outside. He obtains one of the KYC credentials that Owen's domain accepts. He will be placing both permissioned _and_ open offers.
@@ -66,7 +68,7 @@ While these features provide an excellent foundation for compliance, they fall s
 
 #### 1.3.3. Trading Scenario 2
 * Marko has placed open offers on the XRP-EUR orderbook.
-* Tracy places an offer on the XRP-EUR orderbook that crosses one of Marko's offers. Her offer is filled by his.
+* Tracy places an offer on the XRP-EUR orderbook that crosses one of Marko's offers. Her offer cannot be filled by his, since hers is a permissioned offer and his is an open offer.
 
 ### 1.4. How Domains Work
 
@@ -400,7 +402,7 @@ The [`books` subscription option](https://xrpl.org/docs/references/http-websocke
 As a reference, here are the fields that `books` currently accepts:
 
 | Field Name | Required? | JSON Type | Description |
-|-------|---|------|--------------|
+|------------|-----------|-----------|-------------|
 |`taker_gets`|✔️|`object`|Specification of which currency the account taking the Offer would receive.|
 |`taker_pays`|✔️|`object`|Specification of which currency the account taking the Offer would pay.|
 |`taker`|✔️|`string`|Unique account address to use as a perspective for viewing offers. (This affects the funding status and fees of Offers.)|
@@ -419,15 +421,15 @@ This proposal does not suggest any changes to the response fields. As a referenc
 
 | Field Name | Required? | JSON Type | Description |
 |------------|-----------|-----------|-------------|
-|`type`| |`string`|`transaction` indicates this is the notification of a transaction stream, which could come from several possible streams.|
-|`engine_result`| |`string`|String transaction result code.|
-|`engine_result_code`| |`number`|Numeric transaction response code, if applicable.|
-|`engine_result_message`| |`string`|Human-readable explanation for the transaction response.|
-|`ledger_hash`| |`string`|The identifying hash of the ledger version that includes this transaction.|
-|`ledger_index`| |`number`|The ledger index of the ledger version that includes this transaction.|
-|`meta`| |`object`|The transaction metadata, which shows the exact outcome of the transaction in detail.|
-|`transaction`| |`object`|The definition of the transaction in JSON format.|
-|`validated`| |`boolean`|If `true`, this transaction is included in a validated ledger and its outcome is final. Responses from the `transaction` stream should always be validated.|
+|`type`|✔️|`string`|`transaction` indicates this is the notification of a transaction stream, which could come from several possible streams.|
+|`engine_result`|✔️|`string`|String transaction result code.|
+|`engine_result_code`|✔️|`number`|Numeric transaction response code, if applicable.|
+|`engine_result_message`|✔️|`string`|Human-readable explanation for the transaction response.|
+|`ledger_hash`|✔️|`string`|The identifying hash of the ledger version that includes this transaction.|
+|`ledger_index`|✔️|`number`|The ledger index of the ledger version that includes this transaction.|
+|`meta`|✔️|`object`|The transaction metadata, which shows the exact outcome of the transaction in detail.|
+|`transaction`|✔️|`object`|The definition of the transaction in JSON format.|
+|`validated`|✔️|`boolean`|If `true`, this transaction is included in a validated ledger and its outcome is final. Responses from the `transaction` stream should always be validated.|
 
 ## 10. RPC: `book_changes`
 
@@ -487,7 +489,7 @@ Performance tests will need to be conducted once the implementation is done. The
 
 ### A.3: Why do you need a domain? Why not just indicate what credentials you accept on the offer itself?
 
-It's much easier to specify a single domain instead of a list of credentials every time, especially since using an incorrect list of credentials
+It's much easier to specify a single domain instead of a list of credentials every time, especially since using an incorrect list of credentials would result in accessing a different orderbook.
 
 ### A.4: Will an account with Deposit Authorization enabled be forced to use Permissioned DEXes? 
 
