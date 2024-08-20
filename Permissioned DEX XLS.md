@@ -253,7 +253,7 @@ As a reference, [here](https://xrpl.org/docs/references/protocol/transactions/ty
 |`DestinationTag`| |`number`|`UInt32`|An arbitrary tag that identifies the reason for the payment to the destination, or a hosted recipient to pay.|
 |`InvoiceID`| |`string`|`Hash256`|An arbitrary 256-bit hash representing a specific reason or identifier for this payment.|
 |`Paths`| |`array`|`PathSet`|Array of payment paths to be used for this transaction. Must be omitted for XRP-to-XRP transactions.|
-|`SendMax` | |`string` or `object`|`Amount`|Highest amount of source currency this transaction is allowed to cost, including transfer fees, exchange rates, and [slippage](http://en.wikipedia.org/wiki/Slippage_%28finance%29). Does not include the XRP destroyed as a cost for submitting the transaction. For non-XRP amounts, the nested field names MUST be lower-case. Must be supplied for cross-currency/cross-issue payments. Must be omitted for XRP-to-XRP payments.|.|
+|`SendMax` | |`string` or `object`|`Amount`|Highest amount of source currency this transaction is allowed to cost, including transfer fees, exchange rates, and [slippage](http://en.wikipedia.org/wiki/Slippage_%28finance%29). Does not include the XRP destroyed as a cost for submitting the transaction. For non-XRP amounts, the nested field names MUST be lower-case. Must be supplied for cross-currency/cross-issue payments. Must be omitted for XRP-to-XRP payments.|
 </details>
 
 We propose these additions:
