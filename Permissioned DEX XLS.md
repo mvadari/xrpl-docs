@@ -44,7 +44,7 @@ While these features provide an excellent foundation for compliance, they fall s
 
 ### 1.2. Terminology
 
-* **Offer Crossing**: Two offers **cross** if one is selling a token at a price that's actually lower than the price the other is offering to buy it at.
+* **Offer Crossing**: Two offers **cross** if one is selling a token at a price that's actually lower than or equal to the price the other is offering to buy it at.
 * **Offer Filling**: Two offers **fill** each other if the trade executes and the sale goes through. Offers can be partially filled, based on the flags (settings) of the offers.
 * **Permissioned DEX**: The subset of the DEX that operates within the rules of a specific domain.
 * **Open DEX**: The un-permissioned DEX that has no restrictions.
