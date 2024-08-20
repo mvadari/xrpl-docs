@@ -503,6 +503,10 @@ This proposal does not include support for NFT offers in domains. However, that 
 
 No, multiple offers would need to be placed for it to be in multiple domains.
 
+### A.7: Can direct IOU payments be permissioned?
+
+No, because they don't go through the DEX. The issuer and destination can be directly verified for compliance and trust.
+
 ## Appendix B: Alternate Designs
 
 Maybe mention the platonic ideal design here
