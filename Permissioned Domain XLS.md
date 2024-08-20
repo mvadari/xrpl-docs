@@ -45,6 +45,8 @@ This object represents a permissioned domain.
 |`Sequence`|✔️|`number`|`UInt32`|The `Sequence` value of the `PermissionedDomainSet` transaction that created this domain. Used in combination with the `Account` to identify this domain.|
 |`AcceptedCredentials`| |`array`|`STArray`|The credentials that are accepted by the domain. Ownership of one of these credentials automatically makes you a member of the domain.|
 |`AcceptedTokens`| |`array`|`STArray`|The tokens that are allowed by the domain.|
+|`PreviousTxnID`|✔️|`string`|`Hash256`|The identifying hash of the transaction that most recently modified this entry.|
+|`PreviousTxnLgrSeq`|✔️|`number`|`UInt32`|The ledger index that contains the transaction that most recently modified this object.|
 
 #### 2.1.1. `LedgerIndex`
 
@@ -133,7 +135,30 @@ If the transaction is successful:
 
 ## 5. Examples
 
-TODO: add an example domain object
+A sample domain object may look like this (ignoring common fields):
+
+```typescript
+{
+  Owner: "rOWEN......",
+  Sequence: 5,
+  AcceptedCredentials: [
+    Credential: {
+      Issuer: "rISABEL......",
+      CredentialType: "123ABC"
+    }
+  ],
+  AcceptedTokens: {
+    Token: {
+      currency: "USD",
+      issuer: "rUSDISSUER......."
+    },
+    Token: {
+      currency: "EUR",
+      issuer: "rEURISSUER......."
+    },
+  }
+}
+```
 
 ## 6. Invariants
 
