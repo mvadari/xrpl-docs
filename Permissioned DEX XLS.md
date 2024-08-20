@@ -458,18 +458,100 @@ This proposal puts forward the following addition:
 
 ## 11. Examples
 
-TODO: add example transactions for the example flows laid out in 1.3
+These examples will be using the following domain:
+
+```typescript
+{
+  Owner: "rOWEN......",
+  Sequence: 5,
+  AcceptedCredentials: [
+    Credential: {
+      Issuer: "rISABEL......",
+      CredentialType: "123ABC"
+    }
+  ],
+  AcceptedTokens: {
+    Token: {
+      currency: "USD",
+      issuer: "rUSDISSUER......."
+    },
+    Token: {
+      currency: "EUR",
+      issuer: "rEURISSUER......."
+    },
+  }
+}
+```
+
+The domain ID will be `ABCDEF1234567890`.
+
+Both Tracy and Marko have a `123ABC` credential from Isabel.
+
+### 11.1. Placing a Permissioned Offer
+
+In this sample `OfferCreate` transaction, Tracy is trading USD for EUR within Owen's domain.
+
+```typescript
+{
+  TransactionType: "OfferCreate",
+  Account: "rTRACY......",
+  TakerGets: {
+    currency: "USD",
+    issuer: "rUSDISSUER.......",
+    value: "11"
+  },
+  TakerPays: {
+    currency: "EUR",
+    issuer: "rEURISSUER......."
+    value: "10"
+  },
+  DomainID: "ABCDEF1234567890",
+  Fee: "12",
+  Sequence: 8
+}
+```
+
+### 11.2. Placing an Unpermissioned Offer
+
+In this sample `OfferCreate` transaction, Marko is trading EUR for USD on the open USD-EUR orderbook. This offer **will not cross** Tracy's offer, since Tracy's offer is inside the domain.
+
+```typescript
+{
+  TransactionType: "OfferCreate",
+  Account: "rMARKO......",
+  TakerGets: {
+    currency: "EUR",
+    issuer: "rEURISSUER.......",
+    value: "10"
+  },
+  TakerPays: {
+    currency: "USD",
+    issuer: "rUSDISSUER......."
+    value: "11"
+  },
+  Fee: "12",
+  Sequence: 3
+}
+```
 
 ## 12. Invariants
 
-* No offer with a `DomainID` field will be filled by an invalid domain offer, or placed in the orderbook for a different domain (or in the open orderbook).
-* No open offer will be placed in a permissioned orderbook.
+No permissioned offer with a `DomainID` field will be filled by:
+* An invalid domain offer.
+* An offer from a different domain.
+* An open offer.
+
+No permissioned offer will be placed in:
+* An orderbook for a different domain.
+* The open orderbook.
+
+No open offer will be placed in a permissioned orderbook.
+
+No open offer will be filled by a permissioned offer.
 
 ## 13. Security
 
-* You have to trust the issuers of the credentials.
-* You have to trust the domain creator. You can be your own domain creator, though.
-* Potential performance concerns
+The trust assumptions are the same as with permissioned domains.
 
 ## n+1. Open Questions
 
