@@ -1,6 +1,6 @@
 <pre>
 Title:       <b>Permissioned Domains</b>
-Revision:    <b>1</b> (2024-08-20)
+Revision:    <b>1</b> (2024-09-03)
 
 Author:      <a href="mailto:mvadari@ripple.com">Mayukha Vadari</a>
 
