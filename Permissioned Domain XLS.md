@@ -142,20 +142,26 @@ A sample domain object may look like this (ignoring common fields):
   Owner: "rOWEN......",
   Sequence: 5,
   AcceptedCredentials: [
-    Credential: {
-      Issuer: "rISABEL......",
-      CredentialType: "123ABC"
+    {
+      Credential: {
+        Issuer: "rISABEL......",
+        CredentialType: "123ABC"
+      }
     }
   ],
-  AcceptedTokens: {
-    Token: {
-      currency: "USD",
-      issuer: "rUSDISSUER......."
+  AcceptedTokens: [
+    {
+      Token: {
+        currency: "USD",
+        issuer: "rUSDISSUER......."
+      }
     },
-    Token: {
-      currency: "EUR",
-      issuer: "rEURISSUER......."
-    },
+    {
+      Token: {
+        currency: "EUR",
+        issuer: "rEURISSUER......."
+      }
+    }
   }
 }
 ```
@@ -167,22 +173,17 @@ A sample domain object may look like this (ignoring common fields):
 
 ## 7. Security
 
-* You have to trust the issuers of the credentials.
-* You have to trust the domain creator. You can be your own domain creator, though.
+### 7.1. Issuer Trust
+
+Relying on external issuers for credentials requires a degree of trust. If issuer credentials are compromised or forged, the system will be vulnerable.
+
+### 7.2. Domain Creator Trust
+
+While users can create their own domains, trust in the domain creator remains crucial. Malicious domain creators (or hackers) could potentially expose domain users to illegal liquidity.
 
 ## n+1. Open Questions
 
 * Should there be a flag on a domain to make it immutable? And/or undeleteable?
-* Does the domain owner need to have trustlines for the tokens/hold the credentials?
-* Does the domain owner need to be able to freeze/clawback tokens (from the PRD) or delete credentials?
-	* If so, how? There's no real "domain membership" - if you hold one of the domain credentials you're a "domain member" - so it doesn't seem fair that a domain owner can freeze/clawback your tokens.
-	* Update: No.
-* Instead of having a single "Domain" object that stores all the rules, should the rules be each split out into their own object?
-	* Would remove the number of rules restriction, but then each rule would cost one reserve.
-	* Would make it easier to support black/whitelisting though (a la DepositAuth).
-	* Each account could probably only have one domain, then.
-	* Update: I don't think this works because you need a list to iterate through.
-* What other rule types might we want? (Not necessarily now, but also in the future)
 * Should there be a "domain membership" object? It would enable blacklisting etc.
 
 # Appendix
@@ -203,9 +204,23 @@ No, XRP must always be an accepted token, since transaction fees are paid in XRP
 
 ### A.4: Can other rule types be added to domains?
 
-Yes, if there is a need.
+Yes, if there is a need. If you have any in mind, please mention them below.
 
 ### A.5: Can I AND credentials together?
 
 No, because it is difficult to make a clean design for that capability.
+
+### A.6: Does the domain owner have any special powers over the accepted tokens and credentials?
+
+No, unless they are also the issuer of said token/credential.
+
+### A.7: Does the domain owner need to have trustlines for the tokens/hold the credentials?
+
+No.
+
+### A.8: Why not have a ledger object for each domain rule, instead of having it all in one object? Then you wouldn't have any limitations on how many rules a domain could have.
+
+This won't work.
+
+The ledger needs to be able to iterate through the domain rules to ensure that all of them are being adhered to. If a domain owner has millions of objects (or millions of rules), then iterating through all of those objects becomes prohibitively expensive from a performance standpoint.
 
