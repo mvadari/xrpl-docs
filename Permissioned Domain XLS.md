@@ -40,6 +40,7 @@ This object represents a permissioned domain.
 | Field Name | Required? | JSON Type | Internal Type | Description |
 |------------|-----------|-----------|---------------|-------------|
 |`LedgerIndex`|✔️|`string`|`Hash256`|The unique ID of the ledger object.|
+|`Flags`| ✔️|`number`|`UInt32`|Flag values associated with this object.|
 |`LedgerEntryType`|✔️|`string`|`UInt16`|The ledger object's type (`PermissionedDomain`).|
 |`Owner`|✔️|`string`|`AccountID`|The account that controls the settings of the domain.|
 |`Sequence`|✔️|`number`|`UInt32`|The `Sequence` value of the `PermissionedDomainSet` transaction that created this domain. Used in combination with the `Account` to identify this domain.|
@@ -82,6 +83,21 @@ If this field is not included in the domain, then all tokens may be used when in
 |`Token`| |`object`|`Issue`|The token.|
 |`MPToken`| |`object`|`MPTIssue`|The MPToken.|
 
+#### 2.1.4. `Flags`
+
+| Flag Name | Flag Value |
+|-----------|------------|
+|`lsfOnlyXRP`|`0x00010000`|
+
+The `lsfOnlyXRP` flag represents whether the domain should only accept XRP (and no other tokens).
+
+If the `lsfOnlyXRP` flag is enabled, then there must be no `AcceptedTokens` field.
+
+To elaborate:
+* If a token list is needed, the `AcceptedTokens` field should be included.
+* If only XRP should be used, the `lsfOnlyXRP` flag should be included.
+* If there are no token restrictions, neither should be included.
+
 ### 2.2. Account Deletion
 
 The `PermissionedDomain` object is a [deletion blocker](https://xrpl.org/docs/concepts/accounts/deleting-accounts/#requirements).
@@ -95,20 +111,34 @@ This transaction creates or modifies a `PermissionedDomain` object.
 | Field Name | Required? | JSON Type | Internal Type | Description |
 |------------|-----------|-----------|---------------|-------------|
 |`TransactionType`|✔️|`string`|`UInt16`|The transaction type (`PermissionedDomainSet`).|
+|`Flags`| |`number`|`UInt32`|Set of bit-flags for this transaction.|
 |`Account`|✔️|`string`|`AccountID`|The account sending the transaction.|
 |`DomainID`| |`string`|`Hash256`|The domain to modify. Must be included if modifying an existing domain.|
 |`AcceptedCredentials`| |`array`|`STArray`|The credentials that are accepted by the domain. Ownership of one of these credentials automatically makes you a member of the domain. An empty array means deleting the field.|
 |`AcceptedTokens`| |`array`|`STArray`|The tokens that are allowed by the domain. An empty array means deleting the field.|
 
+#### 3.1.1. `Flags`
+
+| Flag Name | Flag Value |
+|-----------|------------|
+|`tfSetOnlyXRP`|`0x00010000`|
+|`tfClearOnlyXRP`|`0x00020000`|
+
+The `tfSetOnlyXRP` flag sets the `lsfOnlyXRP` flag on the `PermissionedDomain` object.
+
+The `tfClearOnlyXRP` clears the `lsfOnlyXRP` flag on the `PermissionedDomain` object.
+
 ### 3.2. Failure Conditions
 
 * `Issuer` doesn't exist on one or more of the credentials in `AcceptedCredentials`.
-* The resulting `PermissionedDomain` object doesn't have any accepted credentials or tokens.
+* The resulting `PermissionedDomain` object doesn't have any accepted credentials or tokens, or the `lsfOnlyXRP` flag.
 * The `AcceptedTokens` or `AcceptedCredentials` arrays are too long.
 * XRP is included in the `AcceptedTokens` array (since it's included by default).
 * If `DomainID` is included:
 	* That domain doesn't exist.
 	* The account isn't the domain owner.
+* The `tfSetOnlyXRP` flag is used and the `lsfOnlyXRP` flag is already set.
+* The `tfClearOnlyXRP` flag is used and the `lsfOnlyXRP` flag is not set.
 
 ### 3.3. State Changes
 
@@ -173,7 +203,8 @@ A sample domain object may look like this (ignoring common fields):
 ## 6. Invariants
 
 * You cannot have a domain with no rules.
-* The `AcceptedCredentials` and `AcceptedTokens` arrays must both have length between 1 and 10.
+* The `AcceptedCredentials` and `AcceptedTokens` arrays must  have length between 1 and 10, if included.
+* The `AcceptedTokens` field and `lsfOnlyXRP` flag cannot both be included.
 
 ## 7. Security
 
