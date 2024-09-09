@@ -60,6 +60,8 @@ This is an array of inner objects referencing a type of credential. The maximum 
 
 The array will be sorted by `Issuer`, so that searching it for a match is more performant.
 
+If this field is not included in the domain, then credentials do not need to be used when interacting with anything using the domain (i.e. there are no credential-based rules).
+
 | Field Name | Required? | JSON Type | Internal Type | Description |
 |------------|-----------|-----------|---------------|-------------|
 |`Issuer`|✔️|`string`|`AccountID`|The issuer of the credential.|
@@ -72,6 +74,8 @@ This is an array of `Issue` objects, which represent issued currencies on the XR
 XRP is automatically included, and therefore will not be included in this array.
 
 The array will be sorted by `issuer`, so that searching it for a match is more performant.
+
+If this field is not included in the domain, then all tokens may be used when interacting with anything using the domain (i.e. there are no token-based rules).
 
 | Field Name | Required? | JSON Type | Internal Type | Description |
 |------------|-----------|-----------|---------------|-------------|
@@ -180,11 +184,6 @@ Relying on external issuers for credentials requires a degree of trust. If issue
 ### 7.2. Domain Creator Trust
 
 While users can create their own domains, trust in the domain creator remains crucial. Malicious domain creators (or hackers) could potentially expose domain users to illegal liquidity.
-
-## n+1. Open Questions
-
-* Should there be a flag on a domain to make it immutable? And/or undeleteable?
-* Should there be a "domain membership" object? It would enable blacklisting etc.
 
 # Appendix
 
