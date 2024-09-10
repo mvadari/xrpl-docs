@@ -1,6 +1,6 @@
 <pre>
 Title:       <b>Permissioned DEXes</b>
-Revision:    <b>1</b> (2024-08-20)
+Revision:    <b>1</b> (2024-09-12)
 
 Author:      <a href="mailto:mvadari@ripple.com">Mayukha Vadari</a>
 
@@ -50,7 +50,7 @@ While these features provide an excellent foundation for compliance, they fall s
 * **Open DEX**: The un-permissioned DEX that has no restrictions.
 * **Permissioned Orderbook**: An orderbook that operates within the rules of a specific domain.
 * **Open Orderbook**: An un-permissioned orderbook that has no restrictions.
-* **Permissioned Offer/Payment**: An offer/cross-currency payment that can only be filled by offers that are a part of a specific domain.
+* **Permissioned Offer/Payment** or **Closed Offer/Payment**: An offer/cross-currency payment that can only be filled by offers that are a part of a specific domain.
 * **Open Offer/Payment** or **Unpermissioned Offer/Payment**: An offer/cross-currency payment that is able to trade on the open DEX or potentially in permissioned DEXes, but doesn't have any restrictions itself.
 * **Valid Domain Offer/Payment**: An offer/cross-currency payment that satisfies the rules of a domain (i.e. the account is a domain member, and the tokens in the offer are accepted). This must be a permissioned offer.
 
@@ -143,7 +143,6 @@ As a reference, [here](https://xrpl.org/docs/references/protocol/ledger-data/led
 
 | Field Name | Required? | JSON Type | Internal Type | Description |
 |------------|-----------|-----------|---------------|-------------|
-|`ExchangeRate`| |`string`|`UInt64`|**DEPRECATED**. Do not use.|
 |`Flags`|✔️|`number`|`UInt32`|A bit-map of boolean flags enabled for this object. Currently, the protocol defines no flags for `DirectoryNode` objects. The value is always `0`.|
 |`Indexes`|✔️|`array`|`Vector256`|The contents of this directory: an array of IDs of other objects.|
 |`IndexNext`| |`number`|`UInt64`|If this directory consists of multiple pages, this ID links to the next object in the chain, wrapping around at the end.|
@@ -315,7 +314,6 @@ This proposal does not suggest any changes to the response fields. As a referenc
 |`ledger_hash`| |`string`|The identifying hash of the ledger version that was used when retrieving this data, as requested.|
 |`offers`|✔️|`array`|Array of offer objects, each of which has the fields of an Offer object.|
 
-
 ## 7. RPC: `path_find`
 
 The [`path_find` RPC method](https://xrpl.org/path_find.html) already exists on the XRPL. This proposal suggests some modifications to also support permissioned DEX domains.
@@ -417,7 +415,7 @@ This proposal puts forward the following addition:
 
 ### 9.2. Response Fields
 
-This proposal does not suggest any changes to the response fields. As a reference, here are the fields that the [`books` subscription currently returns](https://xrpl.org/docs/references/http-websocket-apis/public-api-methods/subscription-methods/subscribe#order-book-streams):
+This proposal does not suggest any changes to the response fields. As a reference, here are the fields that the [`books` subscription currently returns](https://xrpl.org/docs/references/http-websocket-apis/public-api-methods/subscription-methods/subscribe#order-book-streams) (as an array):
 
 | Field Name | Required? | JSON Type | Description |
 |------------|-----------|-----------|-------------|
@@ -591,6 +589,6 @@ No, because they don't go through the DEX. The issuer and destination can be dir
 
 ## Appendix B: Alternate Designs
 
-Maybe mention the platonic ideal design here
+The Platonic ideal design would involve one orderbook per pair of assets. The trader indicates what domain they want to participate in, and the DEX automatically figures out what offers are okay for that domain to accept and what offers are not, based on the contents of the offer and the account that placed it.
 
-n token vs 2 token orderbook
+This was essentially one design considered, which involved all of the offers staying in one orderbook. If an offer needed to be in a domain, each offer that crossed it would be checked for offer membership individually (in the same way that offers are checked on whether they're funded). This idea was scrapped due to performance concerns - a permissioned offer might have to iterate through the whole orderbook before finding a matching offer (if one exists).
