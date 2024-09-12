@@ -26,7 +26,7 @@ We propose:
 * Modifying the `OfferCreate` transaction.
 * Modifying the `Payment` transaction.
 
-This feature will require an amendment, tentatively titled `featurePermissionedDEX`.
+This feature will require an amendment, tentatively titled `featurePermissionedDEX`. The the orderbook and pathing-related RPCs will also need to be updated.
 
 ### 1.1. Background: The Current State of Permissioning and Compliance on the XRPL
 The XRPL has made significant strides toward a compliance-by-design framework, incorporating several features to enhance transparency and control. These tools aim to facilitate regulatory adherence while preserving the platform's decentralized ethos.
