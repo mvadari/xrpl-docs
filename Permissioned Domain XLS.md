@@ -26,7 +26,7 @@ This feature will require an amendment. Since this feature doesn't bring any fun
 
 ### 1.1. Terminology
 
-* **Domain**: A collection of rules indicating what accounts and trades may be a part of it. This spec includes credential-gating and token-gating, but more options could be added in the future.
+* **Domain**: A collection of rules indicating what accounts and transactions may be a part of it. This spec includes credential-gating and token-gating, but more options could be added in the future.
 * **Domain Rules**: The set of rules that govern a domain, i.e. the credentials and tokens it accepts.
 * **Domain Owner**: The account that created a domain, and is the only one that can modify its rules or delete it.
 * **Domain Member**: An account that satisfies the rules of the domain (i.e. has one of the credentials that are accepted by the domain). There is no explicit joining step; as long as the account has a valid credential, it is a member.
@@ -97,6 +97,8 @@ To elaborate:
 * If a token list is needed, the `AcceptedTokens` field should be included.
 * If only XRP should be used, the `lsfOnlyXRP` flag should be included.
 * If there are no token restrictions, neither should be included.
+
+In other words, a `PermissionedDomain` object must have at least one of `lsfOnlyXRP`, `AcceptedTokens`, and `AcceptedCredentials`, but it also cannot have both `lsfOnlyXRP` and `AcceptedTokens`.
 
 ### 2.2. Account Deletion
 
