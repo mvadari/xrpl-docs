@@ -19,7 +19,7 @@ This proposal introduces a permissioned DEX system for the XRPL. By integrating 
 
 ## 1. Overview
 
-This proposal builds on top of [XLS-70d](https://github.com/XRPLF/XRPL-Standards/discussions/202) and [XLS-TBD, Permissioned Domains](https://gist.github.com/mvadari/19568595d558dbf5b22b1355b9e729e8), as Credentials and Permissioned Domains are needed to handle the permissioning aspect.
+This proposal builds on top of [XLS-80d, Permissioned Domains](https://gist.github.com/mvadari/19568595d558dbf5b22b1355b9e729e8), as Permissioned Domains are needed to handle the permissioning aspect.
 
 We propose:
 * Modifying the `Offer` ledger object.
@@ -52,12 +52,12 @@ While these features provide an excellent foundation for compliance, they fall s
 * **Open Orderbook**: An un-permissioned orderbook that has no restrictions.
 * **Permissioned Offer/Payment** or **Closed Offer/Payment**: An offer/cross-currency payment that can only be filled by offers that are a part of a specific domain.
 * **Open Offer/Payment** or **Unpermissioned Offer/Payment**: An offer/cross-currency payment that is able to trade on the open DEX or potentially in permissioned DEXes, but doesn't have any restrictions itself.
-* **Valid Domain Offer/Payment**: An offer/cross-currency payment that satisfies the rules of a domain (i.e. the account is a domain member, and the tokens in the offer are accepted). This must be a permissioned offer.
+* **Valid Domain Offer/Payment**: An offer/cross-currency payment that satisfies the rules of a domain (i.e. the account is a domain member). This must be a permissioned offer.
 
 ### 1.3. Basic Flow
 
 #### 1.3.1. Initial Setup
-* Owen, a domain owner, creates his domain with a set of KYC credentials and allowed tokens (including a certain USD and EUR).
+* Owen, a domain owner, creates his domain with a set of KYC credentials.
 * Tracy, a trader, is operating in Owen's regulatory environment and has strict regulatory requirements - she cannot receive liquidity from non-KYCed accounts. She has one of Owen's accepted KYC credentials, and will only be placing permissioned offers.
 * Marko, a market maker, wants to arbitrage offers in Owen's domain, as there is often a significant price difference inside and outside. He obtains one of the KYC credentials that Owen's domain accepts. He will be placing both permissioned _and_ open offers.
 
@@ -467,17 +467,7 @@ These examples will be using the following domain:
       Issuer: "rISABEL......",
       CredentialType: "123ABC"
     }
-  ],
-  AcceptedTokens: {
-    Token: {
-      currency: "USD",
-      issuer: "rUSDISSUER......."
-    },
-    Token: {
-      currency: "EUR",
-      issuer: "rEURISSUER......."
-    },
-  }
+  ]
 }
 ```
 
@@ -561,7 +551,7 @@ The trust assumptions are the same as with permissioned domains.
 
 ### A.1: How are AMMs handled?
 
-AMMs are not explicitly supported within permissioned DEXes in this proposal. They can participate in domains that are only token-gated (assuming the AMM's tokens are both part of the approved list), but not those that are credential-gated (since they cannot receive credentials). They could be added to permissioned DEXes in a future proposal.
+AMMs are not explicitly supported within permissioned DEXes in this proposal. They could be added to permissioned DEXes in a future proposal.
 
 ### A.2: How will performance/TPS be affected from all these additional checks?
 
